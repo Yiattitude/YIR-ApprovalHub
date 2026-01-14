@@ -1,0 +1,18 @@
+# YIR-ApprovalHub 项目全局忽略
+
+# 编辑器
+.vscode/
+.idea/
+*.sublime-*
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+
+# 临时文件
+*.tmp
+*.bak
+.cache/
