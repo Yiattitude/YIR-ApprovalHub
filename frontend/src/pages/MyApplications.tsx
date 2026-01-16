@@ -19,7 +19,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+
+//  显示用户自己的申请列表，并允许用户筛选和撤回申请
 
 const statusMap: Record<number, { text: string; variant: "default" | "secondary" | "destructive" | "outline" | "success" | "warning" }> = {
     0: { text: '草稿', variant: 'secondary' },
@@ -82,7 +84,7 @@ export default function MyApplications() {
                     <Button onClick={() => navigate('/dashboard/create/leave')}>
                         + 请假申请
                     </Button>
-                    <Button variant="secondary" onClick={() => navigate('/dashboard/create/reimburse')}>
+                    <Button  onClick={() => navigate('/dashboard/create/reimburse')}>
                         + 报销申请
                     </Button>
                 </div>

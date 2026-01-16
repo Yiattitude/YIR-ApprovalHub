@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
 import Login from './pages/Login'
 import Register from './pages/Register'
-import Dashboard from './pages/Dashboard'
+import RoleBasedDashboard from './components/RoleBasedDashboard'
 
 // 路由守卫组件
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -25,7 +25,7 @@ function App() {
                     path="/dashboard/*"
                     element={
                         <ProtectedRoute>
-                            <Dashboard />
+                            <RoleBasedDashboard />
                         </ProtectedRoute>
                     }
                 />

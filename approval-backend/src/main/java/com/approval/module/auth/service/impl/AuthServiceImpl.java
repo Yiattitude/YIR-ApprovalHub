@@ -7,6 +7,7 @@ import com.approval.module.auth.dto.RegisterDto;
 import com.approval.module.auth.service.IAuthService;
 import com.approval.module.auth.vo.LoginVo;
 import com.approval.module.system.entity.User;
+import com.approval.module.system.mapper.RoleMapper;
 import com.approval.module.system.mapper.UserMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * 认证服务实现
@@ -24,6 +26,7 @@ import java.util.Collections;
 public class AuthServiceImpl implements IAuthService {
 
     private final UserMapper userMapper;
+    private final RoleMapper roleMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
 
@@ -117,8 +120,16 @@ public class AuthServiceImpl implements IAuthService {
         userInfo.setUsername(user.getUsername());
         userInfo.setRealName(user.getRealName());
         userInfo.setAvatar(user.getAvatar());
-        // TODO: 查询用户角色
-        userInfo.setRoles(Collections.singletonList("ROLE_USER"));
+        
+        // 查询用户角色
+        List<String> roles = roleMapper.selectRoleKeysByUserId(user.getUserId());
+        if (roles == null || roles.isEmpty()) {
+            // 如果没有角色，默认给普通用户角色
+            userInfo.setRoles(Collections.singletonList("ROLE_USER"));
+        } else {
+            userInfo.setRoles(roles);
+        }
+        
         return userInfo;
     }
 }
