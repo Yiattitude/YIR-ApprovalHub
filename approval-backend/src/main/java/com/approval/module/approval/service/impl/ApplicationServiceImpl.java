@@ -52,7 +52,8 @@ public class ApplicationServiceImpl implements IApplicationService {
     private final DeptMapper deptMapper;
     private final PostMapper postMapper;
 
-    private static final List<Integer> HISTORY_STATUSES = Arrays.asList(3, 4, 5);
+    private static final int STATUS_APPROVED = 3;
+    private static final List<Integer> HISTORY_STATUSES = Arrays.asList(STATUS_APPROVED, 4, 5);
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -321,7 +322,7 @@ public class ApplicationServiceImpl implements IApplicationService {
 
         long totalCount = applications.size();
         long pendingCount = applications.stream().filter(app -> Integer.valueOf(1).equals(app.getStatus())).count();
-        long approvedCount = applications.stream().filter(app -> Integer.valueOf(3).equals(app.getStatus())).count();
+        long approvedCount = applications.stream().filter(app -> Integer.valueOf(STATUS_APPROVED).equals(app.getStatus())).count();
         long rejectedCount = applications.stream().filter(app -> Integer.valueOf(4).equals(app.getStatus())).count();
         long withdrawnCount = applications.stream().filter(app -> Integer.valueOf(5).equals(app.getStatus())).count();
 
@@ -329,25 +330,33 @@ public class ApplicationServiceImpl implements IApplicationService {
             .filter(app -> "leave".equals(app.getAppType()))
             .map(Application::getAppId)
             .collect(Collectors.toList());
+        List<Long> approvedLeaveAppIds = applications.stream()
+            .filter(app -> "leave".equals(app.getAppType()) && Integer.valueOf(STATUS_APPROVED).equals(app.getStatus()))
+            .map(Application::getAppId)
+            .collect(Collectors.toList());
         List<Long> reimburseAppIds = applications.stream()
             .filter(app -> "reimburse".equals(app.getAppType()))
+            .map(Application::getAppId)
+            .collect(Collectors.toList());
+        List<Long> approvedReimburseAppIds = applications.stream()
+            .filter(app -> "reimburse".equals(app.getAppType()) && Integer.valueOf(STATUS_APPROVED).equals(app.getStatus()))
             .map(Application::getAppId)
             .collect(Collectors.toList());
 
         long leaveCount = leaveAppIds.size();
         long reimburseCount = reimburseAppIds.size();
 
-        BigDecimal totalLeaveDays = leaveAppIds.isEmpty() ? BigDecimal.ZERO :
+        BigDecimal totalLeaveDays = approvedLeaveAppIds.isEmpty() ? BigDecimal.ZERO :
             leaveApplicationMapper.selectList(new LambdaQueryWrapper<LeaveApplication>()
-                .in(LeaveApplication::getAppId, leaveAppIds))
+                .in(LeaveApplication::getAppId, approvedLeaveAppIds))
                 .stream()
                 .map(LeaveApplication::getDays)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal totalReimburseAmount = reimburseAppIds.isEmpty() ? BigDecimal.ZERO :
+        BigDecimal totalReimburseAmount = approvedReimburseAppIds.isEmpty() ? BigDecimal.ZERO :
             reimburseApplicationMapper.selectList(new LambdaQueryWrapper<ReimburseApplication>()
-                .in(ReimburseApplication::getAppId, reimburseAppIds))
+                .in(ReimburseApplication::getAppId, approvedReimburseAppIds))
                 .stream()
                 .map(ReimburseApplication::getAmount)
                 .filter(Objects::nonNull)

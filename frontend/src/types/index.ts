@@ -59,6 +59,24 @@ export interface ApplicationHistory {
     finishTime?: string
 }
 
+export interface ApplicationSummary {
+    userId: number
+    realName: string
+    deptName?: string
+    postName?: string
+    totalCount: number
+    pendingCount: number
+    approvedCount: number
+    rejectedCount: number
+    withdrawnCount: number
+    leaveCount: number
+    reimburseCount: number
+    totalLeaveDays: number
+    totalReimburseAmount: number
+    approvalRate: number
+    lastSubmitTime?: string
+}
+
 export interface CreateLeaveRequest {
     leaveType: number
     startTime: string

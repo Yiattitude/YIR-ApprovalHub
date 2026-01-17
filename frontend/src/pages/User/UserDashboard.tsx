@@ -4,13 +4,14 @@ import MyApplications from '../MyApplications'
 import ApprovalHistory from './ApprovalHistory'
 import CreateLeave from './CreateLeave'
 import CreateReimburse from './CreateReimburse'
+import UserSummary from './UserSummary'
 import { Button } from '@/components/ui/button'
 import { LogOut, FileText, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 /**
  * 普通员工Dashboard
- * 功能：我的申请、创建申请
+ 
  */
 export default function UserDashboard() {
     const navigate = useNavigate()
@@ -23,6 +24,7 @@ export default function UserDashboard() {
     }
 
     const navItems = [
+        { href: '/dashboard/summary', label: '仪表盘', icon: FileText },
         { href: '/dashboard/applications', label: '我的申请', icon: FileText },
         { href: '/dashboard/approval-history', label: '审批历史', icon: FileText },
     ]
@@ -52,7 +54,8 @@ export default function UserDashboard() {
                 <aside className="w-64 bg-white border-r min-h-[calc(100vh-4rem)] p-4 space-y-2">
                     {navItems.map((item) => {
                         const Icon = item.icon
-                        const isActive = location.pathname.startsWith(item.href)
+                        const isActive =
+                            location.pathname === item.href || location.pathname.startsWith(`${item.href}/`)
 
                         return (
                             <Link
@@ -76,6 +79,7 @@ export default function UserDashboard() {
                 <main className="flex-1 p-8 overflow-auto">
                     <div className="max-w-5xl mx-auto">
                         <Routes>
+                            <Route path="summary" element={<UserSummary />} />
                             <Route path="applications" element={<MyApplications />} />
                             <Route path="approval-history" element={<ApprovalHistory />} />
                             <Route path="create/leave" element={<CreateLeave />} />
@@ -94,9 +98,10 @@ export default function UserDashboard() {
                                             <Button onClick={() => navigate('/dashboard/applications')}>
                                                 查看我的申请
                                             </Button>
-                                             <Button onClick={() => navigate('/dashboard/approval-history')}>
+                                            <Button onClick={() => navigate('/dashboard/approval-history')}>
                                                 查看审批历史
                                             </Button>
+                                            <br />
                                             <Button variant="outline" onClick={() => navigate('/dashboard/create/leave')}>
                                                 <Plus className="w-4 h-4 mr-2" />
                                                 创建请假申请
