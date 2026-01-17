@@ -334,7 +334,11 @@ export default function UserManagement() {
                                 <Input
                                     value={formData.phone}
                                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+<<<<<<< HEAD
                                     placeholder="请输入手机号（如：13800138000）"
+=======
+                                    placeholder="请输入手机号"
+>>>>>>> c2eb1abacb3ba291482a1c8257cd1b4d765b75fc
                                 />
                             </div>
                         </div>
@@ -344,7 +348,11 @@ export default function UserManagement() {
                                 <Input
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+<<<<<<< HEAD
                                     placeholder="请输入邮箱（如：example@email.com）"
+=======
+                                    placeholder="请输入邮箱"
+>>>>>>> c2eb1abacb3ba291482a1c8257cd1b4d765b75fc
                                 />
                             </div>
                             <div className="space-y-2">
