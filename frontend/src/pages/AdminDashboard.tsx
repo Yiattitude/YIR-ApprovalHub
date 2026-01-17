@@ -1,15 +1,17 @@
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
-import MyApplications from './MyApplications'
-import TodoTasks from './TodoTasks'
-import DoneTasks from './DoneTasks'
+import UserManagement from './UserManagement'
+import DeptManagement from './DeptManagement'
+import PostManagement from './PostManagement'
+import RoleAssignment from './RoleAssignment'
+import AllApplications from './AllApplications'
 import { Button } from '@/components/ui/button'
-import { LogOut, FileText, CheckSquare, ClipboardList, Users, Building2 } from 'lucide-react'
+import { LogOut, Users, Building2, Briefcase, Shield, Database } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 /**
  * 管理员Dashboard
- * 功能：全部申请、待办任务、已办任务、用户管理、部门管理
+ * 功能：用户管理、部门管理、岗位管理、角色分配、审批数据
  */
 export default function AdminDashboard() {
     const navigate = useNavigate()
@@ -22,11 +24,11 @@ export default function AdminDashboard() {
     }
 
     const navItems = [
-        { href: '/dashboard/applications', label: '全部申请', icon: FileText },
-        { href: '/dashboard/todo', label: '待办任务', icon: CheckSquare },
-        { href: '/dashboard/done', label: '已办任务', icon: ClipboardList },
         { href: '/dashboard/users', label: '用户管理', icon: Users },
         { href: '/dashboard/depts', label: '部门管理', icon: Building2 },
+        { href: '/dashboard/posts', label: '岗位管理', icon: Briefcase },
+        { href: '/dashboard/roles', label: '角色分配', icon: Shield },
+        { href: '/dashboard/all-applications', label: '审批数据', icon: Database },
     ]
 
     return (
@@ -78,27 +80,11 @@ export default function AdminDashboard() {
                 <main className="flex-1 p-8 overflow-auto">
                     <div className="max-w-5xl mx-auto">
                         <Routes>
-                            <Route path="applications" element={<MyApplications />} />
-                            <Route path="todo" element={<TodoTasks />} />
-                            <Route path="done" element={<DoneTasks />} />
-                            <Route
-                                path="users"
-                                element={
-                                    <div className="text-center py-20">
-                                        <h2 className="text-2xl font-bold mb-4">用户管理</h2>
-                                        <p className="text-muted-foreground">功能开发中...</p>
-                                    </div>
-                                }
-                            />
-                            <Route
-                                path="depts"
-                                element={
-                                    <div className="text-center py-20">
-                                        <h2 className="text-2xl font-bold mb-4">部门管理</h2>
-                                        <p className="text-muted-foreground">功能开发中...</p>
-                                    </div>
-                                }
-                            />
+                            <Route path="users" element={<UserManagement />} />
+                            <Route path="depts" element={<DeptManagement />} />
+                            <Route path="posts" element={<PostManagement />} />
+                            <Route path="roles" element={<RoleAssignment />} />
+                            <Route path="all-applications" element={<AllApplications />} />
                             <Route
                                 path="/"
                                 element={
@@ -110,14 +96,14 @@ export default function AdminDashboard() {
                                             请从左侧菜单选择功能开始工作
                                         </p>
                                         <div className="flex justify-center gap-4 mt-8">
-                                            <Button onClick={() => navigate('/dashboard/todo')}>
-                                                处理待办任务
-                                            </Button>
-                                            <Button variant="outline" onClick={() => navigate('/dashboard/applications')}>
-                                                查看全部申请
-                                            </Button>
-                                            <Button variant="outline" onClick={() => navigate('/dashboard/users')}>
+                                            <Button onClick={() => navigate('/dashboard/users')}>
                                                 用户管理
+                                            </Button>
+                                            <Button variant="outline" onClick={() => navigate('/dashboard/depts')}>
+                                                部门管理
+                                            </Button>
+                                            <Button variant="outline" onClick={() => navigate('/dashboard/all-applications')}>
+                                                审批数据
                                             </Button>
                                         </div>
                                     </div>

@@ -48,7 +48,7 @@ mysql> SELECT * FROM sys_user;
    - `02-init-data.sql`
 5. 查看执行结果
 
-### 方法三：使用 Navicat
+### 方法三：使用 Navicat   
 
 1. 打开 Navicat
 2. 连接到 MySQL
