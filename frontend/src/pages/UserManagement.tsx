@@ -142,26 +142,7 @@ export default function UserManagement() {
     }
 
     const handleSubmit = async () => {
-        if (!formData.username || !formData.realName) {
-            alert('用户名和真实姓名不能为空')
-            return
-        }
-
-        if (!editingUser && !formData.password) {
-            alert('密码不能为空')
-            return
-        }
-
-        if (formData.phone && !/^1[3-9]\d{9}$/.test(formData.phone)) {
-            alert('手机号格式不正确，请输入正确的手机号（如：13800138000）')
-            return
-        }
-
-        if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-            alert('邮箱格式不正确，请输入正确的邮箱地址')
-            return
-        }
-
+       
         try {
             if (editingUser) {
                 await adminApi.updateUser(formData)
@@ -334,7 +315,7 @@ export default function UserManagement() {
                                 <Input
                                     value={formData.phone}
                                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                    placeholder="请输入手机号（如：13800138000）"
+                                    placeholder="请输入手机号"
                                 />
                             </div>
                         </div>
@@ -344,7 +325,7 @@ export default function UserManagement() {
                                 <Input
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                    placeholder="请输入邮箱（如：example@email.com）"
+                                    placeholder="请输入邮箱"
                                 />
                             </div>
                             <div className="space-y-2">
