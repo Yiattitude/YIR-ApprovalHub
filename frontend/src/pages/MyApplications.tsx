@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ApplicationDetailDialog } from '@/components/ApplicationDetailDialog'
+import PaginationControls from '@/components/PaginationControls'
 import {
     APPLICATION_STATUS,
     APPLICATION_TYPE_LABELS,
@@ -38,6 +39,9 @@ export default function MyApplications() {
     const [filter, setFilter] = useState({ appType: '', status: '' })
     const [detailAppId, setDetailAppId] = useState<number | undefined>()
     const [detailOpen, setDetailOpen] = useState(false)
+    const [pageNum, setPageNum] = useState(1)
+    const [total, setTotal] = useState(0)
+    const pageSize = 10
 
     const allowedStatuses = [0, 1, 2]
 
@@ -45,14 +49,19 @@ export default function MyApplications() {
         setLoading(true)
         try {
             const res = await applicationApi.getMyApplications({
-                pageNum: 1,
-                pageSize: 20,
+                pageNum,
+                pageSize,
                 appType: filter.appType || undefined,
                 status: filter.status ? Number(filter.status) : undefined,
             })
             const records = Array.isArray(res.records) ? res.records : []// 防止后端返回非数组
             const enriched = await enrichApplications(records)
+            if (pageNum > 1 && enriched.length === 0 && (res.total || 0) > 0) {
+                setPageNum((prev) => Math.max(1, prev - 1))
+                return
+            }
             setApplications(enriched.filter((item) => allowedStatuses.includes(item.status)))// 只显示未完成的申请
+            setTotal(res.total || enriched.length)
         } catch (error) {
             console.error(error)
         } finally {
@@ -62,7 +71,7 @@ export default function MyApplications() {
 
     useEffect(() => {
         fetchApplications()
-    }, [filter])
+    }, [filter, pageNum])
 
     const handleViewDetail = (appId: number) => {
         setDetailAppId(appId)
@@ -100,7 +109,10 @@ export default function MyApplications() {
                     <div className="flex gap-4">
                         <Select
                             value={filter.appType}
-                            onValueChange={(val) => setFilter({ ...filter, appType: val === "all" ? "" : val })}
+                            onValueChange={(val) => {
+                                setFilter({ ...filter, appType: val === "all" ? "" : val })
+                                setPageNum(1)
+                            }}
                         >
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="全部类型" />
@@ -114,7 +126,10 @@ export default function MyApplications() {
 
                         <Select
                             value={filter.status}
-                            onValueChange={(val) => setFilter({ ...filter, status: val === "all" ? "" : val })}
+                            onValueChange={(val) => {
+                                setFilter({ ...filter, status: val === "all" ? "" : val })
+                                setPageNum(1)
+                            }}
                         >
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="全部状态" />
@@ -186,6 +201,14 @@ export default function MyApplications() {
                                 ))}
                             </TableBody>
                         </Table>
+                    )}
+                    {!loading && total > pageSize && (
+                        <PaginationControls
+                            pageNum={pageNum}
+                            pageSize={pageSize}
+                            total={total}
+                            onPageChange={setPageNum}
+                        />
                     )}
                 </CardContent>
             </Card>

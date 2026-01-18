@@ -2,15 +2,15 @@ package com.approval.module.system.controller;
 
 import com.approval.common.result.Result;
 import com.approval.common.utils.JwtUtils;
-import com.approval.module.system.dto.AssignRolesDto;
+import com.approval.module.system.dto.AssignPostDto;
 import com.approval.module.system.dto.DeptDto;
 import com.approval.module.system.dto.PostDto;
 import com.approval.module.system.dto.UserDto;
-import com.approval.module.system.entity.Role;
 import com.approval.module.system.entity.User;
 import com.approval.module.system.mapper.UserMapper;
 import com.approval.module.system.service.IAdminService;
 import com.approval.module.system.vo.DeptVo;
+import com.approval.module.system.vo.PermissionVo;
 import com.approval.module.system.vo.PostVo;
 import com.approval.module.system.vo.UserVo;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -153,10 +153,10 @@ public class AdminController {
         return Result.success();
     }
 
-    @Operation(summary = "分配角色")
-    @PostMapping("/users/roles")
-    public Result<Void> assignRoles(@Valid @RequestBody AssignRolesDto dto) {
-        adminService.assignRoles(dto);
+    @Operation(summary = "分配岗位")
+    @PostMapping("/users/post")
+    public Result<Void> assignPost(@Valid @RequestBody AssignPostDto dto) {
+        adminService.assignPost(dto);
         return Result.success();
     }
 
@@ -174,11 +174,11 @@ public class AdminController {
         return Result.success(posts);
     }
 
-    @Operation(summary = "获取所有角色")
-    @GetMapping("/roles/all")
-    public Result<List<Role>> getAllRoles() {
-        List<Role> roles = adminService.getAllRoles();
-        return Result.success(roles);
+    @Operation(summary = "获取所有权限")
+    @GetMapping("/permissions/all")
+    public Result<List<PermissionVo>> getAllPermissions() {
+        List<PermissionVo> permissions = adminService.getAllPermissions();
+        return Result.success(permissions);
     }
 
     private Long getUserIdFromToken(String token) {

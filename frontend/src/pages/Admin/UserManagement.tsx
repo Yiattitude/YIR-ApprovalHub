@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import PaginationControls from '@/components/PaginationControls'
 import {
     Select,
     SelectContent,
@@ -29,6 +30,13 @@ const statusMap: Record<number, { text: string; variant: "default" | "secondary"
     1: { text: '启用', variant: 'success' },
 }
 
+type UserFilter = {
+    username: string
+    realName: string
+    deptId: string
+    status: string
+}
+
 export default function UserManagement() {
     const [users, setUsers] = useState<AdminUser[]>([])
     const [loading, setLoading] = useState(false)
@@ -36,7 +44,10 @@ export default function UserManagement() {
     const [editingUser, setEditingUser] = useState<AdminUser | null>(null)
     const [depts, setDepts] = useState<AdminDept[]>([])
     const [posts, setPosts] = useState<AdminPost[]>([])
-    const [filter, setFilter] = useState({ username: '', realName: '', deptId: '', status: '' })
+    const [filter, setFilter] = useState<UserFilter>({ username: '', realName: '', deptId: '', status: '' })
+    const [pageNum, setPageNum] = useState(1)
+    const [total, setTotal] = useState(0)
+    const pageSize = 5
 
     const [formData, setFormData] = useState<UserFormData>({
         username: '',
@@ -53,15 +64,19 @@ export default function UserManagement() {
         setLoading(true)
         try {
             const res = await adminApi.getUserList({
-                pageNum: 1,
-                pageSize: 100,
+                pageNum,
+                pageSize,
                 username: filter.username || undefined,
                 realName: filter.realName || undefined,
                 deptId: filter.deptId ? Number(filter.deptId) : undefined,
                 status: filter.status ? Number(filter.status) : undefined,
             })
-            console.log('用户数据:', res)
+            if (pageNum > 1 && res.records.length === 0 && res.total > 0) {
+                setPageNum((prev) => Math.max(1, prev - 1))
+                return
+            }
             setUsers(res.records)
+            setTotal(res.total)
         } catch (error) {
             console.error('获取用户列表失败:', error)
         } finally {
@@ -91,7 +106,7 @@ export default function UserManagement() {
 
     useEffect(() => {
         fetchUsers()
-    }, [filter])
+    }, [filter, pageNum])
 
     useEffect(() => {
         fetchDepts()
@@ -157,6 +172,11 @@ export default function UserManagement() {
         }
     }
 
+    const updateFilter = (key: keyof UserFilter, value: string) => {
+        setFilter((prev) => ({ ...prev, [key]: value }))
+        setPageNum(1)
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -173,18 +193,18 @@ export default function UserManagement() {
                         <Input
                             placeholder="用户名"
                             value={filter.username}
-                            onChange={(e) => setFilter({ ...filter, username: e.target.value })}
+                            onChange={(e) => updateFilter('username', e.target.value)}
                             className="w-[200px]"
                         />
                         <Input
                             placeholder="真实姓名"
                             value={filter.realName}
-                            onChange={(e) => setFilter({ ...filter, realName: e.target.value })}
+                            onChange={(e) => updateFilter('realName', e.target.value)}
                             className="w-[200px]"
                         />
                         <Select
                             value={filter.deptId}
-                            onValueChange={(val) => setFilter({ ...filter, deptId: val === "all" ? "" : val })}
+                            onValueChange={(val) => updateFilter('deptId', val === "all" ? "" : val)}
                         >
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="全部部门" />
@@ -200,7 +220,7 @@ export default function UserManagement() {
                         </Select>
                         <Select
                             value={filter.status}
-                            onValueChange={(val) => setFilter({ ...filter, status: val === "all" ? "" : val })}
+                            onValueChange={(val) => updateFilter('status', val === "all" ? "" : val)}
                         >
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="全部状态" />
@@ -222,55 +242,70 @@ export default function UserManagement() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>用户ID</TableHead>
-                                    <TableHead>用户名</TableHead>
-                                    <TableHead>真实姓名</TableHead>
-                                    <TableHead>手机号</TableHead>
-                                    <TableHead>邮箱</TableHead>
-                                    <TableHead>部门</TableHead>
-                                    <TableHead>岗位</TableHead>
-                                    <TableHead>角色</TableHead>
-                                    <TableHead>状态</TableHead>
-                                    <TableHead>创建时间</TableHead>
-                                    <TableHead>操作</TableHead>
+                                    <TableHead className="whitespace-nowrap">用户ID</TableHead>
+                                    <TableHead className="whitespace-nowrap">用户名</TableHead>
+                                    <TableHead className="whitespace-nowrap">真实姓名</TableHead>
+                                    <TableHead className="whitespace-nowrap">手机号</TableHead>
+                                    <TableHead className="whitespace-nowrap">邮箱</TableHead>
+                                    <TableHead className="whitespace-nowrap">部门</TableHead>
+                                    <TableHead className="whitespace-nowrap">岗位</TableHead>
+                                    <TableHead className="whitespace-nowrap">状态</TableHead>
+                                    <TableHead className="whitespace-nowrap">创建时间</TableHead>
+                                    <TableHead className="whitespace-nowrap">操作</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {users.map((user) => (
                                     <TableRow key={user.userId}>
-                                        <TableCell>{user.userId}</TableCell>
-                                        <TableCell>{user.username}</TableCell>
-                                        <TableCell>{user.realName}</TableCell>
-                                        <TableCell>{user.phone || '-'}</TableCell>
-                                        <TableCell>{user.email || '-'}</TableCell>
-                                        <TableCell>{user.deptName || '-'}</TableCell>
-                                        <TableCell>{user.postName || '-'}</TableCell>
-                                        <TableCell>{user.roles?.join(', ') || '-'}</TableCell>
-                                        <TableCell>
+                                        <TableCell className="whitespace-nowrap">{user.userId}</TableCell>
+                                        <TableCell className="whitespace-nowrap">{user.username}</TableCell>
+                                        <TableCell className="whitespace-nowrap">{user.realName}</TableCell>
+                                        <TableCell className="whitespace-nowrap">{user.phone || '-'}</TableCell>
+                                        <TableCell className="whitespace-nowrap">{user.email || '-'}</TableCell>
+                                        <TableCell className="whitespace-nowrap">{user.deptName || '-'}</TableCell>
+                                        <TableCell className="whitespace-nowrap">{user.postName || '-'}</TableCell>
+                                        <TableCell className="whitespace-nowrap">
                                             <Badge variant={statusMap[user.status]?.variant}>
                                                 {statusMap[user.status]?.text}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="whitespace-nowrap">
                                             {new Date(user.createTime).toLocaleString('zh-CN')}
                                         </TableCell>
-                                        <TableCell className="space-x-2">
-                                            <Button variant="ghost" size="sm" onClick={() => handleEdit(user)}>
-                                                <Pencil className="w-4 h-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="text-destructive"
-                                                onClick={() => handleDelete(user.userId)}
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
+                                        <TableCell className="whitespace-nowrap">
+                                            <div className="flex flex-col gap-2 min-w-[120px]">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="justify-start"
+                                                    onClick={() => handleEdit(user)}
+                                                >
+                                                    <Pencil className="w-4 h-4 mr-2" />
+                                                    编辑
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="justify-start text-destructive"
+                                                    onClick={() => handleDelete(user.userId)}
+                                                >
+                                                    <Trash2 className="w-4 h-4 mr-2" />
+                                                    删除
+                                                </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
+                    )}
+                    {!loading && total > pageSize && (
+                        <PaginationControls
+                            pageNum={pageNum}
+                            pageSize={pageSize}
+                            total={total}
+                            onPageChange={setPageNum}
+                        />
                     )}
                 </CardContent>
             </Card>

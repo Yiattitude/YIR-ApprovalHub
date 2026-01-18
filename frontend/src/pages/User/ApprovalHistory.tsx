@@ -15,6 +15,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { ApplicationDetailDialog } from '@/components/ApplicationDetailDialog'
+import PaginationControls from '@/components/PaginationControls'
 import {
     APPLICATION_STATUS,
     APPLICATION_TYPE_LABELS,
@@ -39,6 +40,9 @@ export default function ApprovalHistory() {
     const [filter, setFilter] = useState({ appType: '', status: '', approverName: '', month: '' })
     const [detailAppId, setDetailAppId] = useState<number | undefined>()
     const [detailOpen, setDetailOpen] = useState(false)
+    const [pageNum, setPageNum] = useState(1)
+    const [total, setTotal] = useState(0)
+    const pageSize = 10
 
     const loadFilterOptions = async () => {
         try {
@@ -69,8 +73,8 @@ export default function ApprovalHistory() {
         setLoading(true)
         try {
             const params: Record<string, any> = {
-                pageNum: 1,
-                pageSize: 20,
+                pageNum,
+                pageSize,
                 appType: filter.appType || undefined,
                 status: filter.status ? Number(filter.status) : undefined,
                 approverName: filter.approverName || undefined,
@@ -84,7 +88,12 @@ export default function ApprovalHistory() {
 
             const res = await applicationApi.getHistoryApplications(params)
             const records = Array.isArray(res.records) ? res.records : []
+            if (pageNum > 1 && records.length === 0 && (res.total || 0) > 0) {
+                setPageNum((prev) => Math.max(1, prev - 1))
+                return
+            }
             setApplications(records)
+            setTotal(res.total || records.length)
         } catch (error) {
             console.error(error)
         } finally {
@@ -99,7 +108,7 @@ export default function ApprovalHistory() {
     useEffect(() => {
         fetchApplications()
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filter.appType, filter.status, filter.approverName, filter.month])
+    }, [filter.appType, filter.status, filter.approverName, filter.month, pageNum])
 
     const handleViewDetail = (appId: number) => {
         setDetailAppId(appId)
@@ -125,9 +134,10 @@ export default function ApprovalHistory() {
                     <div className="flex gap-4">
                         <Select
                             value={filter.appType}
-                            onValueChange={(val) =>
+                            onValueChange={(val) => {
                                 setFilter((prev) => ({ ...prev, appType: val === 'all' ? '' : val }))
-                            }
+                                setPageNum(1)
+                            }}
                         >
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="全部类型" />
@@ -141,9 +151,10 @@ export default function ApprovalHistory() {
 
                         <Select
                             value={filter.status}
-                            onValueChange={(val) =>
+                            onValueChange={(val) => {
                                 setFilter((prev) => ({ ...prev, status: val === 'all' ? '' : val }))
-                            }
+                                setPageNum(1)
+                            }}
                         >
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="全部状态" />
@@ -158,9 +169,10 @@ export default function ApprovalHistory() {
 
                         <Select
                             value={filter.approverName}
-                            onValueChange={(val) =>
+                            onValueChange={(val) => {
                                 setFilter((prev) => ({ ...prev, approverName: val === 'all' ? '' : val }))
-                            }
+                                setPageNum(1)
+                            }}
                         >
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="审批人" />
@@ -183,9 +195,10 @@ export default function ApprovalHistory() {
 
                         <Select
                             value={filter.month}
-                            onValueChange={(val) =>
+                            onValueChange={(val) => {
                                 setFilter((prev) => ({ ...prev, month: val === 'all' ? '' : val }))
-                            }
+                                setPageNum(1)
+                            }}
                         >
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="时间" />
@@ -256,6 +269,14 @@ export default function ApprovalHistory() {
                                 ))}
                             </TableBody>
                         </Table>
+                    )}
+                    {!loading && total > pageSize && (
+                        <PaginationControls
+                            pageNum={pageNum}
+                            pageSize={pageSize}
+                            total={total}
+                            onPageChange={setPageNum}
+                        />
                     )}
                 </CardContent>
             </Card>

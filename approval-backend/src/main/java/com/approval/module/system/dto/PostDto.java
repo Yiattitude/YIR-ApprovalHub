@@ -3,6 +3,8 @@ package com.approval.module.system.dto;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class PostDto {
 
@@ -17,4 +19,6 @@ public class PostDto {
     private Integer postSort;
 
     private Integer status;
+
+    private List<Long> permissionIds;
 }

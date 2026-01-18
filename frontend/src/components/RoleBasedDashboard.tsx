@@ -10,13 +10,13 @@ import UserDashboard from '@/pages/User/UserDashboard'
 export default function RoleBasedDashboard() {
     const { user } = useAuthStore()
     
-    // 获取用户的主要角色（优先级：ADMIN > APPROVER > USER）
-    const roles = user?.roles || []
+    // 根据岗位权限判断要展示的主控台
+    const permissions = user?.permissions || []
     let dashboardComponent = null
     
-    if (roles.includes('ROLE_ADMIN')) {
+    if (permissions.includes('SYSTEM_ADMIN')) {
         dashboardComponent = <AdminDashboard />
-    } else if (roles.includes('ROLE_APPROVER')) {
+    } else if (permissions.includes('APPROVAL_REVIEW')) {
         dashboardComponent = <ApproverDashboard />
     } else {
         // 默认普通员工

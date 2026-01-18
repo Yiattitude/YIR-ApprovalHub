@@ -56,17 +56,17 @@ export default function UserSummary() {
         },
     ]
 
-    const roleLabelMap: Record<string, string> = {
-        admin: '管理员',
-        approver: '审批人',
-        user: '普通员工',
+    const permissionLabelMap: Record<string, string> = {
+        SYSTEM_ADMIN: '系统管理',
+        APPROVAL_REVIEW: '审批处理',
+        APPLICATION_SUBMIT: '申请提交',
     }
 
-    const permissionBadges = (user?.roles?.length ? user.roles : ['user']).map((role) => {
-        const normalized = role.replace(/^ROLE_/i, '').toLowerCase()
-        const label = roleLabelMap[normalized] || (normalized ? normalized : '普通员工')
+    const fallbackPermissions = user?.permissions?.length ? user.permissions : ['APPLICATION_SUBMIT']
+    const permissionBadges = fallbackPermissions.map((permission) => {
+        const label = permissionLabelMap[permission.toUpperCase()] || permission
         return (
-            <Badge key={role} variant="secondary">
+            <Badge key={permission} variant="secondary">
                 {label}
             </Badge>
         )

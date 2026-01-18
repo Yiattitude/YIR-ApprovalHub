@@ -12,6 +12,7 @@ import type {
     CreateReimburseRequest,
     Task,
     ApproveTaskRequest,
+    ApproverDashboardSummary,
 } from '@/types'
 
 // ========== 认证相关 ==========
@@ -92,4 +93,8 @@ export const taskApi = {
     // 查询已办任务
     getDoneTasks: (params: { pageNum?: number; pageSize?: number }) =>
         request.get<any, { records: Task[]; total: number }>('/task/done', { params }),
+
+    // 审批人仪表盘统计
+    getApproverDashboard: (params?: { year?: number; month?: number }) =>
+        request.get<any, ApproverDashboardSummary>('/task/dashboard', { params }),
 }

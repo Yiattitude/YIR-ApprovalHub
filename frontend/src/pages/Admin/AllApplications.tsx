@@ -20,6 +20,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
+import PaginationControls from '@/components/PaginationControls'
 
 const statusMap: Record<number, { text: string; variant: "default" | "secondary" | "destructive" | "outline" | "success" | "warning" }> = {
     0: { text: '草稿', variant: 'secondary' },
@@ -39,18 +40,26 @@ export default function AllApplications() {
     const [applications, setApplications] = useState<Application[]>([])
     const [loading, setLoading] = useState(false)
     const [filter, setFilter] = useState({ appType: '', status: '', appNo: '' })
+    const [pageNum, setPageNum] = useState(1)
+    const [total, setTotal] = useState(0)
+    const pageSize = 10
 
     const fetchApplications = async () => {
         setLoading(true)
         try {
             const res = await adminApi.getAllApplications({
-                pageNum: 1,
-                pageSize: 100,
+                pageNum,
+                pageSize,
                 appType: filter.appType || undefined,
                 status: filter.status ? Number(filter.status) : undefined,
                 appNo: filter.appNo || undefined,
             })
+            if (pageNum > 1 && res.records.length === 0 && res.total > 0) {
+                setPageNum((prev) => Math.max(1, prev - 1))
+                return
+            }
             setApplications(res.records)
+            setTotal(res.total)
         } catch (error) {
             console.error(error)
         } finally {
@@ -60,7 +69,12 @@ export default function AllApplications() {
 
     useEffect(() => {
         fetchApplications()
-    }, [filter])
+    }, [filter, pageNum])
+
+    const updateFilter = (key: 'appType' | 'status' | 'appNo', value: string) => {
+        setFilter((prev) => ({ ...prev, [key]: value }))
+        setPageNum(1)
+    }
 
     return (
         <div className="space-y-6">
@@ -74,12 +88,12 @@ export default function AllApplications() {
                         <Input
                             placeholder="申请单号"
                             value={filter.appNo}
-                            onChange={(e) => setFilter({ ...filter, appNo: e.target.value })}
+                            onChange={(e) => updateFilter('appNo', e.target.value)}
                             className="w-[200px]"
                         />
                         <Select
                             value={filter.appType}
-                            onValueChange={(val) => setFilter({ ...filter, appType: val === "all" ? "" : val })}
+                            onValueChange={(val) => updateFilter('appType', val === "all" ? "" : val)}
                         >
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="全部类型" />
@@ -93,7 +107,7 @@ export default function AllApplications() {
 
                         <Select
                             value={filter.status}
-                            onValueChange={(val) => setFilter({ ...filter, status: val === "all" ? "" : val })}
+                            onValueChange={(val) => updateFilter('status', val === "all" ? "" : val)}
                         >
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="全部状态" />
@@ -148,6 +162,14 @@ export default function AllApplications() {
                                 ))}
                             </TableBody>
                         </Table>
+                    )}
+                    {!loading && total > pageSize && (
+                        <PaginationControls
+                            pageNum={pageNum}
+                            pageSize={pageSize}
+                            total={total}
+                            onPageChange={setPageNum}
+                        />
                     )}
                 </CardContent>
             </Card>

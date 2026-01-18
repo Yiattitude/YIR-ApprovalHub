@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import PaginationControls from '@/components/PaginationControls'
 import {
     Select,
     SelectContent,
@@ -36,6 +37,9 @@ export default function DeptManagement() {
     const [editingDept, setEditingDept] = useState<AdminDept | null>(null)
     const [parentDepts, setParentDepts] = useState<AdminDept[]>([])
     const [filter, setFilter] = useState({ deptName: '', status: '' })
+    const [pageNum, setPageNum] = useState(1)
+    const [total, setTotal] = useState(0)
+    const pageSize = 5
 
     const [formData, setFormData] = useState<DeptFormData>({
         parentId: 0,
@@ -51,14 +55,17 @@ export default function DeptManagement() {
         setLoading(true)
         try {
             const res = await adminApi.getDeptList({
-                pageNum: 1,
-                pageSize: 100,
+                pageNum,
+                pageSize,
                 deptName: filter.deptName || undefined,
                 status: filter.status ? Number(filter.status) : undefined,
             })
-            console.log('部门数据:', res)
+            if (pageNum > 1 && res.records.length === 0 && res.total > 0) {
+                setPageNum((prev) => Math.max(1, prev - 1))
+                return
+            }
             setDepts(res.records)
-            setParentDepts(res.records)
+            setTotal(res.total)
         } catch (error) {
             console.error('获取部门列表失败:', error)
         } finally {
@@ -68,7 +75,24 @@ export default function DeptManagement() {
 
     useEffect(() => {
         fetchDepts()
-    }, [filter])
+    }, [filter, pageNum])
+
+    useEffect(() => {
+        const fetchParentOptions = async () => {
+            try {
+                const res = await adminApi.getAllDepts()
+                setParentDepts(res)
+            } catch (error) {
+                console.error('获取全部部门失败:', error)
+            }
+        }
+        fetchParentOptions()
+    }, [])
+
+    const updateFilter = (key: 'deptName' | 'status', value: string) => {
+        setFilter((prev) => ({ ...prev, [key]: value }))
+        setPageNum(1)
+    }
 
     const handleCreate = () => {
         setEditingDept(null)
@@ -143,12 +167,12 @@ export default function DeptManagement() {
                         <Input
                             placeholder="部门名称"
                             value={filter.deptName}
-                            onChange={(e) => setFilter({ ...filter, deptName: e.target.value })}
+                            onChange={(e) => updateFilter('deptName', e.target.value)}
                             className="w-[200px]"
                         />
                         <Select
                             value={filter.status}
-                            onValueChange={(val) => setFilter({ ...filter, status: val === "all" ? "" : val })}
+                            onValueChange={(val) => updateFilter('status', val === "all" ? "" : val)}
                         >
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="全部状态" />
@@ -200,23 +224,40 @@ export default function DeptManagement() {
                                         <TableCell>
                                             {new Date(dept.createTime).toLocaleString('zh-CN')}
                                         </TableCell>
-                                        <TableCell className="space-x-2">
-                                            <Button variant="ghost" size="sm" onClick={() => handleEdit(dept)}>
-                                                <Pencil className="w-4 h-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="text-destructive"
-                                                onClick={() => handleDelete(dept.deptId)}
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
+                                        <TableCell>
+                                            <div className="flex flex-col gap-2 min-w-[120px]">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="justify-start"
+                                                    onClick={() => handleEdit(dept)}
+                                                >
+                                                    <Pencil className="w-4 h-4 mr-2" />
+                                                    编辑
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="justify-start text-destructive"
+                                                    onClick={() => handleDelete(dept.deptId)}
+                                                >
+                                                    <Trash2 className="w-4 h-4 mr-2" />
+                                                    删除
+                                                </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
+                    )}
+                    {!loading && total > pageSize && (
+                        <PaginationControls
+                            pageNum={pageNum}
+                            pageSize={pageSize}
+                            total={total}
+                            onPageChange={setPageNum}
+                        />
                     )}
                 </CardContent>
             </Card>

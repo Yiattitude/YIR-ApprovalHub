@@ -3,7 +3,9 @@ export interface User {
     username: string
     realName: string
     avatar?: string
-    roles: string[]
+    postId?: number
+    postName?: string
+    permissions: string[]
 }
 
 export interface LoginRequest {
@@ -130,6 +132,28 @@ export interface ApplicationSummary {
     lastSubmitTime?: string
 }
 
+export interface ApprovalTypeStat {
+    appType: string
+    typeLabel: string
+    count: number
+}
+
+export interface DailyApprovalStat {
+    date: string
+    count: number
+}
+
+export interface ApproverDashboardSummary {
+    realName: string
+    deptName?: string
+    postName?: string
+    totalCount: number
+    approvedCount: number
+    rejectedCount: number
+    typeStats: ApprovalTypeStat[]
+    dailyStats: DailyApprovalStat[]
+}
+
 export interface CreateLeaveRequest {
     leaveType: number
     startTime: string
@@ -179,7 +203,7 @@ export interface AdminUser {
     postName?: string
     avatar?: string
     status: number
-    roles: string[]
+    permissions: string[]
     createTime: string
 }
 
@@ -203,15 +227,14 @@ export interface AdminPost {
     postSort: number
     status: number
     createTime: string
+    permissions?: Permission[]
 }
 
-export interface AdminRole {
-    roleId: number
-    roleName: string
-    roleKey: string
-    roleSort: number
-    status: number
-    remark?: string
+export interface Permission {
+    permissionId: number
+    permissionCode: string
+    permissionName: string
+    description?: string
 }
 
 export interface UserFormData {
@@ -244,9 +267,10 @@ export interface PostFormData {
     postName: string
     postSort: number
     status: number
+    permissionIds?: number[]
 }
 
-export interface AssignRolesData {
+export interface AssignPostData {
     userId: number
-    roleIds: number[]
+    postId: number
 }

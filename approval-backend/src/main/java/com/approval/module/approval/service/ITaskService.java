@@ -1,6 +1,7 @@
 package com.approval.module.approval.service;
 
 import com.approval.module.approval.dto.ApproveTaskDto;
+import com.approval.module.approval.vo.ApproverDashboardVo;
 import com.approval.module.approval.vo.TaskVo;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
@@ -23,4 +24,9 @@ public interface ITaskService {
      * 查询已办任务
      */
     Page<TaskVo> getDoneTasks(Long userId, Integer pageNum, Integer pageSize);
+
+    /**
+     * 获取审批人仪表盘统计
+     */
+    ApproverDashboardVo getApproverDashboard(Long userId, Integer year, Integer month);
 }

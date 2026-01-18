@@ -4,6 +4,7 @@ import com.approval.common.result.Result;
 import com.approval.common.utils.JwtUtils;
 import com.approval.module.approval.dto.ApproveTaskDto;
 import com.approval.module.approval.service.ITaskService;
+import com.approval.module.approval.vo.ApproverDashboardVo;
 import com.approval.module.approval.vo.TaskVo;
 import com.approval.module.system.entity.User;
 import com.approval.module.system.mapper.UserMapper;
@@ -58,6 +59,17 @@ public class TaskController {
         Long userId = getUserIdFromToken(token);
         Page<TaskVo> page = taskService.getDoneTasks(userId, pageNum, pageSize);
         return Result.success(page);
+    }
+
+    @Operation(summary = "审批人仪表盘统计")
+    @GetMapping("/dashboard")
+    public Result<ApproverDashboardVo> getApproverDashboard(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month,
+            @RequestHeader("Authorization") String token) {
+        Long userId = getUserIdFromToken(token);
+        ApproverDashboardVo data = taskService.getApproverDashboard(userId, year, month);
+        return Result.success(data);
     }
 
     /**

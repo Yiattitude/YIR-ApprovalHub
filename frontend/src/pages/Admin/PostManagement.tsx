@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { adminApi } from '@/api/admin'
-import type { AdminPost, PostFormData } from '@/types'
+import type { AdminPost, Permission, PostFormData } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
+import PaginationControls from '@/components/PaginationControls'
 import {
     Select,
     SelectContent,
@@ -35,25 +37,34 @@ export default function PostManagement() {
     const [dialogOpen, setDialogOpen] = useState(false)
     const [editingPost, setEditingPost] = useState<AdminPost | null>(null)
     const [filter, setFilter] = useState({ postName: '', status: '' })
+    const [allPermissions, setAllPermissions] = useState<Permission[]>([])
+    const [pageNum, setPageNum] = useState(1)
+    const [total, setTotal] = useState(0)
+    const pageSize = 5
 
     const [formData, setFormData] = useState<PostFormData>({
         postCode: '',
         postName: '',
         postSort: 0,
         status: 1,
+        permissionIds: [],
     })
 
     const fetchPosts = async () => {
         setLoading(true)
         try {
             const res = await adminApi.getPostList({
-                pageNum: 1,
-                pageSize: 100,
+                pageNum,
+                pageSize,
                 postName: filter.postName || undefined,
                 status: filter.status ? Number(filter.status) : undefined,
             })
-            console.log('岗位数据:', res)
+            if (pageNum > 1 && res.records.length === 0 && res.total > 0) {
+                setPageNum((prev) => Math.max(1, prev - 1))
+                return
+            }
             setPosts(res.records)
+            setTotal(res.total)
         } catch (error) {
             console.error('获取岗位列表失败:', error)
         } finally {
@@ -63,7 +74,24 @@ export default function PostManagement() {
 
     useEffect(() => {
         fetchPosts()
-    }, [filter])
+    }, [filter, pageNum])
+
+    useEffect(() => {
+        const fetchPermissions = async () => {
+            try {
+                const list = await adminApi.getAllPermissions()
+                setAllPermissions(list)
+            } catch (error) {
+                console.error('获取权限列表失败:', error)
+            }
+        }
+        fetchPermissions()
+    }, [])
+
+    const updateFilter = (key: 'postName' | 'status', value: string) => {
+        setFilter((prev) => ({ ...prev, [key]: value }))
+        setPageNum(1)
+    }
 
     const handleCreate = () => {
         setEditingPost(null)
@@ -72,6 +100,7 @@ export default function PostManagement() {
             postName: '',
             postSort: 0,
             status: 1,
+            permissionIds: [],
         })
         setDialogOpen(true)
     }
@@ -84,6 +113,7 @@ export default function PostManagement() {
             postName: post.postName,
             postSort: post.postSort,
             status: post.status,
+            permissionIds: post.permissions?.map((item) => item.permissionId) || [],
         })
         setDialogOpen(true)
     }
@@ -98,6 +128,19 @@ export default function PostManagement() {
         } catch (error: any) {
             alert(error?.message || '删除失败')
         }
+    }
+
+    const togglePermission = (permissionId: number) => {
+        setFormData((prev) => {
+            const current = prev.permissionIds || []
+            const exists = current.includes(permissionId)
+            return {
+                ...prev,
+                permissionIds: exists
+                    ? current.filter((id) => id !== permissionId)
+                    : [...current, permissionId],
+            }
+        })
     }
 
     const handleSubmit = async () => {
@@ -132,12 +175,12 @@ export default function PostManagement() {
                         <Input
                             placeholder="岗位名称"
                             value={filter.postName}
-                            onChange={(e) => setFilter({ ...filter, postName: e.target.value })}
+                            onChange={(e) => updateFilter('postName', e.target.value)}
                             className="w-[200px]"
                         />
                         <Select
                             value={filter.status}
-                            onValueChange={(val) => setFilter({ ...filter, status: val === "all" ? "" : val })}
+                            onValueChange={(val) => updateFilter('status', val === "all" ? "" : val)}
                         >
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="全部状态" />
@@ -164,6 +207,7 @@ export default function PostManagement() {
                                     <TableHead>岗位名称</TableHead>
                                     <TableHead>排序</TableHead>
                                     <TableHead>状态</TableHead>
+                                    <TableHead>权限</TableHead>
                                     <TableHead>创建时间</TableHead>
                                     <TableHead>操作</TableHead>
                                 </TableRow>
@@ -181,25 +225,55 @@ export default function PostManagement() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
+                                            {post.permissions && post.permissions.length > 0 ? (
+                                                <div className="flex flex-wrap gap-1">
+                                                    {post.permissions.map((permission) => (
+                                                        <Badge key={permission.permissionId} variant="outline">
+                                                            {permission.permissionName}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <span className="text-sm text-muted-foreground">未配置</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
                                             {new Date(post.createTime).toLocaleString('zh-CN')}
                                         </TableCell>
-                                        <TableCell className="space-x-2">
-                                            <Button variant="ghost" size="sm" onClick={() => handleEdit(post)}>
-                                                <Pencil className="w-4 h-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="text-destructive"
-                                                onClick={() => handleDelete(post.postId)}
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
+                                        <TableCell>
+                                            <div className="flex flex-col gap-2 min-w-[120px]">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="justify-start"
+                                                    onClick={() => handleEdit(post)}
+                                                >
+                                                    <Pencil className="w-4 h-4 mr-2" />
+                                                    编辑
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="justify-start text-destructive"
+                                                    onClick={() => handleDelete(post.postId)}
+                                                >
+                                                    <Trash2 className="w-4 h-4 mr-2" />
+                                                    删除
+                                                </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
+                    )}
+                    {!loading && total > pageSize && (
+                        <PaginationControls
+                            pageNum={pageNum}
+                            pageSize={pageSize}
+                            total={total}
+                            onPageChange={setPageNum}
+                        />
                     )}
                 </CardContent>
             </Card>
@@ -251,6 +325,40 @@ export default function PostManagement() {
                                     </SelectContent>
                                 </Select>
                             </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>权限配置</Label>
+                            {allPermissions.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">暂无可用权限，请稍后再试。</p>
+                            ) : (
+                                <div className="grid gap-3">
+                                    {allPermissions.map((permission) => {
+                                        const checked = formData.permissionIds?.includes(permission.permissionId) ?? false
+                                        return (
+                                            <label
+                                                key={permission.permissionId}
+                                                htmlFor={`permission-${permission.permissionId}`}
+                                                className="flex items-start gap-3 rounded-md border border-dashed p-3"
+                                            >
+                                                <Checkbox
+                                                    id={`permission-${permission.permissionId}`}
+                                                    checked={checked}
+                                                    onCheckedChange={() => togglePermission(permission.permissionId)}
+                                                />
+                                                <div className="space-y-1">
+                                                    <p className="text-sm font-medium text-foreground leading-tight">
+                                                        {permission.permissionName}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">{permission.permissionCode}</p>
+                                                    {permission.description && (
+                                                        <p className="text-xs text-muted-foreground">{permission.description}</p>
+                                                    )}
+                                                </div>
+                                            </label>
+                                        )
+                                    })}
+                                </div>
+                            )}
                         </div>
                     </div>
                     <DialogFooter>

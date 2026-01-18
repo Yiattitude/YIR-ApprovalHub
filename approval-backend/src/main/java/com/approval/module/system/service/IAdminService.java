@@ -1,10 +1,11 @@
 package com.approval.module.system.service;
 
-import com.approval.module.system.dto.AssignRolesDto;
+import com.approval.module.system.dto.AssignPostDto;
 import com.approval.module.system.dto.DeptDto;
 import com.approval.module.system.dto.PostDto;
 import com.approval.module.system.dto.UserDto;
 import com.approval.module.system.vo.DeptVo;
+import com.approval.module.system.vo.PermissionVo;
 import com.approval.module.system.vo.PostVo;
 import com.approval.module.system.vo.UserVo;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -41,11 +42,11 @@ public interface IAdminService {
 
     void deletePost(Long postId);
 
-    void assignRoles(AssignRolesDto dto);
+    void assignPost(AssignPostDto dto);
 
     java.util.List<DeptVo> getAllDepts();
 
     java.util.List<PostVo> getAllPosts();
 
-    java.util.List<com.approval.module.system.entity.Role> getAllRoles();
+    java.util.List<PermissionVo> getAllPermissions();
 }

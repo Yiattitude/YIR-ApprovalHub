@@ -1,20 +1,21 @@
 package com.approval.module.system.service.impl;
 
 import com.approval.common.exception.BusinessException;
-import com.approval.module.system.dto.AssignRolesDto;
+import com.approval.module.system.dto.AssignPostDto;
 import com.approval.module.system.dto.DeptDto;
 import com.approval.module.system.dto.PostDto;
 import com.approval.module.system.dto.UserDto;
 import com.approval.module.system.entity.Dept;
 import com.approval.module.system.entity.Post;
-import com.approval.module.system.entity.Role;
+import com.approval.module.system.entity.Permission;
 import com.approval.module.system.entity.User;
 import com.approval.module.system.mapper.DeptMapper;
 import com.approval.module.system.mapper.PostMapper;
-import com.approval.module.system.mapper.RoleMapper;
+import com.approval.module.system.mapper.PermissionMapper;
 import com.approval.module.system.mapper.UserMapper;
 import com.approval.module.system.service.IAdminService;
 import com.approval.module.system.vo.DeptVo;
+import com.approval.module.system.vo.PermissionVo;
 import com.approval.module.system.vo.PostVo;
 import com.approval.module.system.vo.UserVo;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -34,7 +35,7 @@ public class AdminServiceImpl implements IAdminService {
     private final UserMapper userMapper;
     private final DeptMapper deptMapper;
     private final PostMapper postMapper;
-    private final RoleMapper roleMapper;
+    private final PermissionMapper permissionMapper;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -281,11 +282,9 @@ public class AdminServiceImpl implements IAdminService {
         Page<Post> postPage = postMapper.selectPage(page, wrapper);
         Page<PostVo> voPage = new Page<>(postPage.getCurrent(), postPage.getSize(), postPage.getTotal());
 
-        voPage.setRecords(postPage.getRecords().stream().map(post -> {
-            PostVo vo = new PostVo();
-            org.springframework.beans.BeanUtils.copyProperties(post, vo);
-            return vo;
-        }).collect(Collectors.toList()));
+        voPage.setRecords(postPage.getRecords().stream()
+            .map(this::convertToPostVo)
+            .collect(Collectors.toList()));
 
         return voPage;
     }
@@ -297,9 +296,7 @@ public class AdminServiceImpl implements IAdminService {
             throw new BusinessException(404, "岗位不存在");
         }
 
-        PostVo vo = new PostVo();
-        org.springframework.beans.BeanUtils.copyProperties(post, vo);
-        return vo;
+        return convertToPostVo(post);
     }
 
     @Override
@@ -318,6 +315,7 @@ public class AdminServiceImpl implements IAdminService {
         post.setStatus(dto.getStatus() != null ? dto.getStatus() : 1);
 
         postMapper.insert(post);
+        savePostPermissions(post.getPostId(), dto.getPermissionIds());
     }
 
     @Override
@@ -346,6 +344,7 @@ public class AdminServiceImpl implements IAdminService {
         post.setStatus(dto.getStatus());
 
         postMapper.updateById(post);
+        savePostPermissions(post.getPostId(), dto.getPermissionIds());
     }
 
     @Override
@@ -362,29 +361,25 @@ public class AdminServiceImpl implements IAdminService {
             throw new BusinessException("岗位下存在用户，无法删除");
         }
 
+        permissionMapper.deletePostPermissions(postId);
         postMapper.deleteById(postId);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void assignRoles(AssignRolesDto dto) {
+    public void assignPost(AssignPostDto dto) {
         User user = userMapper.selectById(dto.getUserId());
         if (user == null) {
             throw new BusinessException(404, "用户不存在");
         }
 
-        for (Long roleId : dto.getRoleIds()) {
-            Role role = roleMapper.selectById(roleId);
-            if (role == null) {
-                throw new BusinessException("角色不存在");
-            }
+        Post post = postMapper.selectById(dto.getPostId());
+        if (post == null) {
+            throw new BusinessException(404, "岗位不存在");
         }
 
-        userMapper.deleteUserRole(dto.getUserId());
-
-        for (Long roleId : dto.getRoleIds()) {
-            userMapper.insertUserRole(dto.getUserId(), roleId);
-        }
+        user.setPostId(dto.getPostId());
+        userMapper.updateById(user);
     }
 
     @Override
@@ -402,17 +397,52 @@ public class AdminServiceImpl implements IAdminService {
     public List<PostVo> getAllPosts() {
         List<Post> posts = postMapper.selectList(
                 new LambdaQueryWrapper<Post>().eq(Post::getStatus, 1).orderByAsc(Post::getPostSort));
-        return posts.stream().map(post -> {
-            PostVo vo = new PostVo();
-            org.springframework.beans.BeanUtils.copyProperties(post, vo);
-            return vo;
-        }).collect(Collectors.toList());
+        return posts.stream()
+            .map(this::convertToPostVo)
+            .collect(Collectors.toList());
     }
 
-    @Override
-    public List<Role> getAllRoles() {
-        return roleMapper.selectList(
-                new LambdaQueryWrapper<Role>().eq(Role::getStatus, 1).orderByAsc(Role::getRoleSort));
+        @Override
+        public List<PermissionVo> getAllPermissions() {
+        List<Permission> permissions = permissionMapper.selectList(
+            new LambdaQueryWrapper<Permission>().eq(Permission::getStatus, 1).eq(Permission::getDelFlag, 0));
+        return permissions.stream()
+            .map(this::convertToPermissionVo)
+            .collect(Collectors.toList());
+        }
+
+    private void savePostPermissions(Long postId, java.util.List<Long> permissionIds) {
+        permissionMapper.deletePostPermissions(postId);
+        if (permissionIds == null || permissionIds.isEmpty()) {
+            return;
+        }
+
+        for (Long permissionId : permissionIds) {
+            Permission permission = permissionMapper.selectById(permissionId);
+            if (permission == null || permission.getStatus() == null || permission.getStatus() == 0) {
+                throw new BusinessException("权限不存在或已禁用");
+            }
+            permissionMapper.insertPostPermission(postId, permissionId);
+        }
+    }
+
+    private PostVo convertToPostVo(Post post) {
+        PostVo vo = new PostVo();
+        org.springframework.beans.BeanUtils.copyProperties(post, vo);
+        List<Permission> permissionList = permissionMapper.selectPermissionsByPostId(post.getPostId());
+        if (permissionList == null) {
+            permissionList = java.util.Collections.emptyList();
+        }
+        vo.setPermissions(permissionList.stream()
+                .map(this::convertToPermissionVo)
+                .collect(Collectors.toList()));
+        return vo;
+    }
+
+    private PermissionVo convertToPermissionVo(Permission permission) {
+        PermissionVo vo = new PermissionVo();
+        org.springframework.beans.BeanUtils.copyProperties(permission, vo);
+        return vo;
     }
 
     private UserVo convertToUserVo(User user) {
@@ -433,8 +463,12 @@ public class AdminServiceImpl implements IAdminService {
             }
         }
 
-        List<String> roles = userMapper.selectRolesByUserId(user.getUserId());
-        vo.setRoles(roles);
+        List<String> permissions = java.util.Collections.emptyList();
+        if (user.getPostId() != null) {
+            List<String> codes = permissionMapper.selectPermissionCodesByPostId(user.getPostId());
+            permissions = codes != null ? codes : java.util.Collections.emptyList();
+        }
+        vo.setPermissions(permissions);
 
         return vo;
     }

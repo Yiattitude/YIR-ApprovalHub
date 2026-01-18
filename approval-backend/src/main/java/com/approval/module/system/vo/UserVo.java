@@ -30,7 +30,7 @@ public class UserVo {
 
     private Integer status;
 
-    private List<String> roles;
+    private List<String> permissions;
 
     private LocalDateTime createTime;
 }

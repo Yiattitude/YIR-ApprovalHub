@@ -16,6 +16,15 @@ INSERT INTO sys_role (role_id, role_name, role_key, role_sort, remark) VALUES
 (3, '普通员工', 'ROLE_USER', 3, '可以发起申请');
 
 -- =============================================
+-- 1.1 初始化权限数据
+-- =============================================
+
+INSERT INTO sys_permission (permission_id, permission_code, permission_name, description) VALUES
+(1, 'SYSTEM_ADMIN', '系统管理权限', '可访问系统管理后台'),
+(2, 'APPROVAL_REVIEW', '审批处理权限', '可处理审批任务'),
+(3, 'APPLICATION_SUBMIT', '申请提交权限', '可发起业务申请');
+
+-- =============================================
 -- 2. 初始化部门数据
 -- =============================================
 
@@ -36,6 +45,13 @@ INSERT INTO sys_post (post_id, post_code, post_name, post_sort) VALUES
 (2, 'MANAGER', '部门经理', 2),
 (3, 'LEADER', '组长', 3),
 (4, 'EMPLOYEE', '普通员工', 4);
+
+-- 岗位权限关联
+INSERT INTO sys_post_permission (post_id, permission_id) VALUES
+(1, 1), (1, 2), (1, 3),
+(2, 2), (2, 3),
+(3, 2), (3, 3),
+(4, 3);
 
 -- =============================================
 -- 4. 初始化用户数据

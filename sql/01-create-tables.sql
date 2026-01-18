@@ -83,6 +83,25 @@ CREATE TABLE sys_user_role (
     PRIMARY KEY (user_id, role_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户角色关联表';
 
+-- 2.6 权限表
+CREATE TABLE sys_permission (
+    permission_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '权限ID',
+    permission_code VARCHAR(100) NOT NULL UNIQUE COMMENT '权限编码',
+    permission_name VARCHAR(100) NOT NULL COMMENT '权限名称',
+    description VARCHAR(255) COMMENT '权限描述',
+    status TINYINT DEFAULT 1 COMMENT '状态：0=禁用 1=启用',
+    del_flag TINYINT DEFAULT 0 COMMENT '删除标志：0=正常 1=删除',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='权限表';
+
+-- 2.7 岗位权限关联表
+CREATE TABLE sys_post_permission (
+    post_id BIGINT NOT NULL COMMENT '岗位ID',
+    permission_id BIGINT NOT NULL COMMENT '权限ID',
+    PRIMARY KEY (post_id, permission_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='岗位权限关联表';
+
 -- =============================================
 -- 审批业务表
 -- =============================================

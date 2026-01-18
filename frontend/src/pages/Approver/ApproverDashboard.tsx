@@ -1,10 +1,11 @@
-import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
+import { Routes, Route, Link, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import MyApplications from '../MyApplications'
 import TodoTasks from './TodoTasks'
 import DoneTasks from './DoneTasks'
+import ApproverSummary from './ApproverSummary'
 import { Button } from '@/components/ui/button'
-import { LogOut, FileText, CheckSquare, ClipboardList } from 'lucide-react'
+import { LogOut, FileText, CheckSquare, ClipboardList, Gauge } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 /**
@@ -22,6 +23,7 @@ export default function ApproverDashboard() {
     }
 
     const navItems = [
+        { href: '/dashboard/summary', label: '审批仪表盘', icon: Gauge },
         { href: '/dashboard/applications', label: '我的申请', icon: FileText },
         { href: '/dashboard/todo', label: '待审批任务', icon: CheckSquare },
         { href: '/dashboard/done', label: '已审批任务', icon: ClipboardList },
@@ -76,30 +78,11 @@ export default function ApproverDashboard() {
                 <main className="flex-1 p-8 overflow-auto">
                     <div className="max-w-5xl mx-auto">
                         <Routes>
+                            <Route path="summary" element={<ApproverSummary />} />
                             <Route path="applications" element={<MyApplications />} />
                             <Route path="todo" element={<TodoTasks />} />
                             <Route path="done" element={<DoneTasks />} />
-                            <Route
-                                path="/"
-                                element={
-                                    <div className="text-center py-20 space-y-4">
-                                        <h2 className="text-3xl font-bold text-gray-800">
-                                            欢迎使用审批系统
-                                        </h2>
-                                        <p className="text-muted-foreground">
-                                            请从左侧菜单选择功能开始工作
-                                        </p>
-                                        <div className="flex justify-center gap-4 mt-8">
-                                            <Button onClick={() => navigate('/dashboard/todo')}>
-                                                处理待办任务
-                                            </Button>
-                                            <Button variant="outline" onClick={() => navigate('/dashboard/applications')}>
-                                                查看我的申请
-                                            </Button>
-                                        </div>
-                                    </div>
-                                }
-                            />
+                            <Route index element={<Navigate to="/dashboard/summary" replace />} />
                         </Routes>
                     </div>
                 </main>

@@ -3,7 +3,7 @@ import { useAuthStore } from '@/store/authStore'
 import UserManagement from './UserManagement'
 import DeptManagement from './DeptManagement'
 import PostManagement from './PostManagement'
-import RoleAssignment from './RoleAssignment'
+import PostAssignment from './PostAssignment'
 import AllApplications from './AllApplications'
 import { Button } from '@/components/ui/button'
 import { LogOut, Users, Building2, Briefcase, Shield, Database } from 'lucide-react'
@@ -27,7 +27,7 @@ export default function AdminDashboard() {
         { href: '/dashboard/users', label: '用户管理', icon: Users },
         { href: '/dashboard/depts', label: '部门管理', icon: Building2 },
         { href: '/dashboard/posts', label: '岗位管理', icon: Briefcase },
-        { href: '/dashboard/roles', label: '角色分配', icon: Shield },
+        { href: '/dashboard/roles', label: '岗位分配', icon: Shield },
         { href: '/dashboard/all-applications', label: '审批数据', icon: Database },
     ]
 
@@ -83,7 +83,7 @@ export default function AdminDashboard() {
                             <Route path="users" element={<UserManagement />} />
                             <Route path="depts" element={<DeptManagement />} />
                             <Route path="posts" element={<PostManagement />} />
-                            <Route path="roles" element={<RoleAssignment />} />
+                            <Route path="roles" element={<PostAssignment />} />
                             <Route path="all-applications" element={<AllApplications />} />
                             <Route
                                 path="/"

@@ -3,11 +3,11 @@ import type {
     AdminUser,
     AdminDept,
     AdminPost,
-    AdminRole,
+    Permission,
     UserFormData,
     DeptFormData,
     PostFormData,
-    AssignRolesData,
+    AssignPostData,
     Application,
 } from '@/types'
 
@@ -74,8 +74,8 @@ export const adminApi = {
     deletePost: (postId: number) =>
         request.delete(`/admin/posts/${postId}`),
 
-    assignRoles: (data: AssignRolesData) =>
-        request.post('/admin/users/roles', data),
+    assignPost: (data: AssignPostData) =>
+        request.post('/admin/users/post', data),
 
     getAllDepts: () =>
         request.get<AdminDept[]>('/admin/depts/all'),
@@ -83,8 +83,8 @@ export const adminApi = {
     getAllPosts: () =>
         request.get<AdminPost[]>('/admin/posts/all'),
 
-    getAllRoles: () =>
-        request.get<AdminRole[]>('/admin/roles/all'),
+    getAllPermissions: () =>
+        request.get<Permission[]>('/admin/permissions/all'),
 
     getAllApplications: (params: {
         pageNum?: number
