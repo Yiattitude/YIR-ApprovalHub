@@ -10,11 +10,15 @@ import com.approval.module.approval.mapper.ApplicationMapper;
 import com.approval.module.approval.mapper.LeaveApplicationMapper;
 import com.approval.module.approval.mapper.ReimburseApplicationMapper;
 import com.approval.module.approval.service.IApplicationService;
+import com.approval.module.approval.vo.ApproverOptionVo;
 import com.approval.module.approval.vo.ApplicationHistoryVo;
 import com.approval.module.approval.vo.ApplicationSummaryVo;
 import com.approval.module.approval.vo.ApplicationVo;
+import com.approval.module.system.entity.Dept;
+import com.approval.module.system.entity.Post;
 import com.approval.module.system.entity.User;
 import com.approval.module.system.mapper.DeptMapper;
+import com.approval.module.system.mapper.PermissionMapper;
 import com.approval.module.system.mapper.PostMapper;
 import com.approval.module.system.mapper.UserMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -51,9 +55,11 @@ public class ApplicationServiceImpl implements IApplicationService {
     private final com.approval.module.approval.mapper.HistoryMapper historyMapper;
     private final DeptMapper deptMapper;
     private final PostMapper postMapper;
+    private final PermissionMapper permissionMapper;
 
     private static final int STATUS_APPROVED = 3;
     private static final List<Integer> HISTORY_STATUSES = Arrays.asList(STATUS_APPROVED, 4, 5);
+    private static final String APPROVAL_PERMISSION_CODE = "APPROVAL_REVIEW";
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -63,6 +69,13 @@ public class ApplicationServiceImpl implements IApplicationService {
         if (user == null) {
             throw new BusinessException("用户不存在");
         }
+        if (user.getDeptId() == null) {
+            throw new BusinessException("您尚未分配部门，暂时无法提交申请");
+        }
+
+        User approver = validateApprover(user, dto.getApproverId());
+        Dept dept = deptMapper.selectById(user.getDeptId());
+        String currentNode = dept != null ? dept.getDeptName() + "审批" : "部门审批";
 
         // 2. 创建申请主表
         Application application = new Application();
@@ -73,7 +86,7 @@ public class ApplicationServiceImpl implements IApplicationService {
         application.setApplicantId(userId);
         application.setDeptId(user.getDeptId());
         application.setStatus(1); // 待审批
-        application.setCurrentNode("部门经理审批");
+        application.setCurrentNode(currentNode);
         application.setSubmitTime(LocalDateTime.now());
 
         applicationMapper.insert(application);
@@ -90,8 +103,8 @@ public class ApplicationServiceImpl implements IApplicationService {
 
         leaveApplicationMapper.insert(leave);
 
-        // 4. 创建审批任务 (自动指派给经理，ID=2)
-        createTask(application, 2L, "技术部经理");
+        // 4. 创建审批任务
+        createTask(application, approver.getUserId(), approver.getRealName());
 
         return application.getAppId();
     }
@@ -104,6 +117,13 @@ public class ApplicationServiceImpl implements IApplicationService {
         if (user == null) {
             throw new BusinessException("用户不存在");
         }
+        if (user.getDeptId() == null) {
+            throw new BusinessException("您尚未分配部门，暂时无法提交申请");
+        }
+
+        User approver = validateApprover(user, dto.getApproverId());
+        Dept dept = deptMapper.selectById(user.getDeptId());
+        String currentNode = dept != null ? dept.getDeptName() + "审批" : "部门审批";
 
         // 2. 创建申请主表
         Application application = new Application();
@@ -114,7 +134,7 @@ public class ApplicationServiceImpl implements IApplicationService {
         application.setApplicantId(userId);
         application.setDeptId(user.getDeptId());
         application.setStatus(1); // 待审批
-        application.setCurrentNode("部门经理审批");
+        application.setCurrentNode(currentNode);
         application.setSubmitTime(LocalDateTime.now());
 
         applicationMapper.insert(application);
@@ -131,7 +151,7 @@ public class ApplicationServiceImpl implements IApplicationService {
         reimburseApplicationMapper.insert(reimburse);
 
         // 4. 创建审批任务
-        createTask(application, 2L, "技术部经理");
+        createTask(application, approver.getUserId(), approver.getRealName());
 
         return application.getAppId();
     }
@@ -145,6 +165,34 @@ public class ApplicationServiceImpl implements IApplicationService {
         task.setStatus(0);
         task.setCreateTime(LocalDateTime.now());
         taskMapper.insert(task);
+    }
+
+    private User validateApprover(User applicant, Long approverId) {
+        if (approverId == null) {
+            throw new BusinessException("请选择审批人");
+        }
+        if (Objects.equals(applicant.getUserId(), approverId)) {
+            throw new BusinessException("申请人不能审批自己的申请");
+        }
+
+        User approver = userMapper.selectById(approverId);
+        if (approver == null || approver.getStatus() == null || approver.getStatus() == 0) {
+            throw new BusinessException("审批人无效或已停用");
+        }
+        if (approver.getDeptId() == null || !Objects.equals(applicant.getDeptId(), approver.getDeptId())) {
+            throw new BusinessException("审批人必须与申请人属于同一部门");
+        }
+        if (approver.getPostId() == null) {
+            throw new BusinessException("审批人尚未分配岗位，无法处理审批");
+        }
+
+        List<String> permissions = permissionMapper.selectPermissionCodesByPostId(approver.getPostId());
+        boolean hasApprovalPermission = permissions != null
+                && permissions.stream().anyMatch(APPROVAL_PERMISSION_CODE::equals);
+        if (!hasApprovalPermission) {
+            throw new BusinessException("所选人员暂无审批权限");
+        }
+        return approver;
     }
 
     @Override
@@ -189,12 +237,18 @@ public class ApplicationServiceImpl implements IApplicationService {
 
         // 批量获取申请人信息
         User user = userMapper.selectById(userId);
+        String deptName = "";
+        if (user != null && user.getDeptId() != null) {
+            Dept userDept = deptMapper.selectById(user.getDeptId());
+            deptName = userDept != null ? userDept.getDeptName() : "";
+        }
+        final String finalDeptName = deptName;
 
         voPage.setRecords(records.stream().map(app -> {
             ApplicationVo vo = new ApplicationVo();
             org.springframework.beans.BeanUtils.copyProperties(app, vo);
             vo.setApplicantName(user != null ? user.getRealName() : "");
-            vo.setDeptName("技术部"); // 简化处理
+            vo.setDeptName(finalDeptName != null && !finalDeptName.isEmpty() ? finalDeptName : "未分配");
 
             if ("leave".equals(app.getAppType())) {
                 LeaveApplication leave = leaveMap.get(app.getAppId());
@@ -435,6 +489,68 @@ public class ApplicationServiceImpl implements IApplicationService {
             .lastSubmitTime(lastSubmitTime)
             .build();
         }
+
+    @Override
+    public List<ApproverOptionVo> getDeptApprovers(Long userId, Long deptId) {
+        User currentUser = userMapper.selectById(userId);
+        if (currentUser == null) {
+            throw new BusinessException("用户不存在");
+        }
+
+        Long targetDeptId = deptId != null ? deptId : currentUser.getDeptId();
+        if (targetDeptId == null) {
+            return Collections.emptyList();
+        }
+
+        List<User> candidates = userMapper.selectList(new LambdaQueryWrapper<User>()
+                .eq(User::getDeptId, targetDeptId)
+                .eq(User::getStatus, 1)
+                .isNotNull(User::getPostId));
+        if (candidates.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> postIds = candidates.stream()
+                .map(User::getPostId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<Long, Post> postMap = postIds.isEmpty()
+                ? Collections.emptyMap()
+                : postMapper.selectBatchIds(postIds).stream()
+                        .filter(Objects::nonNull)
+                .collect(Collectors.toMap(Post::getPostId, post -> post, (first, second) -> first));
+
+        Map<Long, List<String>> permissionMap = new HashMap<>();
+        for (Long postId : postIds) {
+            List<String> codes = permissionMapper.selectPermissionCodesByPostId(postId);
+            permissionMap.put(postId, codes != null ? codes : Collections.emptyList());
+        }
+
+        Dept dept = deptMapper.selectById(targetDeptId);
+        String deptName = dept != null ? dept.getDeptName() : null;
+
+        return candidates.stream()
+                .filter(candidate -> {
+                    List<String> codes = permissionMap.get(candidate.getPostId());
+                    return codes != null && codes.contains(APPROVAL_PERMISSION_CODE);
+                })
+                .map(candidate -> {
+                    ApproverOptionVo vo = new ApproverOptionVo();
+                    vo.setUserId(candidate.getUserId());
+                    vo.setRealName(candidate.getRealName());
+                    vo.setDeptId(targetDeptId);
+                    vo.setDeptName(deptName);
+                    Post post = postMap.get(candidate.getPostId());
+                    if (post != null) {
+                        vo.setPostId(post.getPostId());
+                        vo.setPostName(post.getPostName());
+                    }
+                    return vo;
+                })
+                .collect(Collectors.toList());
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)

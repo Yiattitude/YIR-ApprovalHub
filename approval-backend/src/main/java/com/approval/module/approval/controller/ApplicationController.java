@@ -5,6 +5,7 @@ import com.approval.common.utils.JwtUtils;
 import com.approval.module.approval.dto.CreateLeaveDto;
 import com.approval.module.approval.dto.CreateReimburseDto;
 import com.approval.module.approval.service.IApplicationService;
+import com.approval.module.approval.vo.ApproverOptionVo;
 import com.approval.module.approval.vo.ApplicationHistoryVo;
 import com.approval.module.approval.vo.ApplicationSummaryVo;
 import com.approval.module.approval.vo.ApplicationVo;
@@ -20,6 +21,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 申请管理控制器
@@ -92,6 +94,16 @@ public class ApplicationController {
         Long userId = getUserIdFromToken(token);
         ApplicationSummaryVo summary = applicationService.getMySummary(userId);
         return Result.success(summary);
+    }
+
+    @Operation(summary = "获取部门审批人列表")
+    @GetMapping("/approvers")
+    public Result<List<ApproverOptionVo>> getDeptApprovers(
+            @RequestParam(required = false) Long deptId,
+            @RequestHeader("Authorization") String token) {
+        Long userId = getUserIdFromToken(token);
+        List<ApproverOptionVo> approvers = applicationService.getDeptApprovers(userId, deptId);
+        return Result.success(approvers);
     }
 
     @Operation(summary = "查询申请详情")

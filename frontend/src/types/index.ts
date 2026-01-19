@@ -3,6 +3,8 @@ export interface User {
     username: string
     realName: string
     avatar?: string
+    deptId?: number
+    deptName?: string
     postId?: number
     postName?: string
     permissions: string[]
@@ -154,6 +156,15 @@ export interface ApproverDashboardSummary {
     dailyStats: DailyApprovalStat[]
 }
 
+export interface ApproverOption {
+    userId: number
+    realName: string
+    deptId: number
+    deptName?: string
+    postId?: number
+    postName?: string
+}
+
 export interface CreateLeaveRequest {
     leaveType: number
     startTime: string
@@ -161,6 +172,7 @@ export interface CreateLeaveRequest {
     days: number
     reason: string
     attachment?: string
+    approverId: number
 }
 
 export interface CreateReimburseRequest {
@@ -169,6 +181,7 @@ export interface CreateReimburseRequest {
     reason: string
     invoiceAttachment: string
     occurDate: string
+    approverId: number
 }
 
 export interface Task {
@@ -273,4 +286,5 @@ export interface PostFormData {
 export interface AssignPostData {
     userId: number
     postId: number
+    deptId?: number
 }

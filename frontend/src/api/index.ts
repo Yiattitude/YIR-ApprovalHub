@@ -13,6 +13,7 @@ import type {
     Task,
     ApproveTaskRequest,
     ApproverDashboardSummary,
+    ApproverOption,
 } from '@/types'
 
 // ========== 认证相关 ==========
@@ -78,6 +79,10 @@ export const applicationApi = {
     // 获取我的申请统计概要
     getSummary: () =>
         request.get<any, ApplicationSummary>('/application/summary'),
+
+    // 获取审批人列表（按部门）
+    getApprovers: (params?: { deptId?: number }) =>
+        request.get<any, ApproverOption[]>('/application/approvers', { params }),
 }
 
 // ========== 任务相关 ==========

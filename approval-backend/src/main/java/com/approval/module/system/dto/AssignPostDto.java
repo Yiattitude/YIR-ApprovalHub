@@ -11,4 +11,6 @@ public class AssignPostDto {
 
     @NotNull(message = "岗位ID不能为空")
     private Long postId;
+
+    private Long deptId;
 }

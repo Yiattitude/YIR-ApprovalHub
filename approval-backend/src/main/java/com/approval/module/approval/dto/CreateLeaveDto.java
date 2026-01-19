@@ -32,4 +32,7 @@ public class CreateLeaveDto {
     private String reason;
 
     private String attachment; // 附件地址
+
+    @NotNull(message = "审批人不能为空")
+    private Long approverId;
 }

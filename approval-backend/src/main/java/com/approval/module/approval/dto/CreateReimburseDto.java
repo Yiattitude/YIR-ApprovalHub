@@ -28,4 +28,7 @@ public class CreateReimburseDto {
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate occurDate; // 发生日期
+
+    @NotNull(message = "审批人不能为空")
+    private Long approverId;
 }

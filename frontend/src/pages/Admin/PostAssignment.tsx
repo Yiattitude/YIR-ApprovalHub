@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { adminApi } from '@/api/admin'
-import type { AdminUser, AdminPost } from '@/types'
+import type { AdminUser, AdminPost, AdminDept } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import {
     Select,
@@ -31,10 +31,13 @@ const statusMap: Record<number, { text: string; variant: "default" | "secondary"
 export default function PostAssignment() {
     const [users, setUsers] = useState<AdminUser[]>([])
     const [posts, setPosts] = useState<AdminPost[]>([])
+    const [depts, setDepts] = useState<AdminDept[]>([])
     const [loading, setLoading] = useState(false)
     const [dialogOpen, setDialogOpen] = useState(false)
     const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null)
     const [selectedPostId, setSelectedPostId] = useState<number | null>(null)
+    const [selectedDeptId, setSelectedDeptId] = useState<number | null>(null)
+    const [deptAutoFilled, setDeptAutoFilled] = useState(false)
 
     const fetchUsers = async () => {
         setLoading(true)
@@ -60,14 +63,36 @@ export default function PostAssignment() {
         }
     }
 
+    const fetchDepts = async () => {
+        try {
+            const res = await adminApi.getAllDepts()
+            setDepts(res)
+        } catch (error) {
+            console.error('获取部门失败:', error)
+        }
+    }
+
     useEffect(() => {
         fetchUsers()
         fetchPosts()
+        fetchDepts()
     }, [])
+
+    useEffect(() => {
+        if (!dialogOpen || deptAutoFilled) {
+            return
+        }
+        if (selectedDeptId == null && depts.length > 0) {
+            setSelectedDeptId(depts[0].deptId)
+            setDeptAutoFilled(true)
+        }
+    }, [dialogOpen, depts, selectedDeptId, deptAutoFilled])
 
     const handleAssignPost = (user: AdminUser) => {
         setSelectedUser(user)
         setSelectedPostId(user.postId ?? null)
+        setSelectedDeptId(user.deptId ?? null)
+        setDeptAutoFilled(false)
         setDialogOpen(true)
     }
 
@@ -76,11 +101,16 @@ export default function PostAssignment() {
             alert('请选择岗位')
             return
         }
+        if (selectedDeptId === null) {
+            alert('请选择部门')
+            return
+        }
 
         try {
             await adminApi.assignPost({
                 userId: selectedUser.userId,
                 postId: selectedPostId,
+                deptId: selectedDeptId,
             })
             alert('岗位分配成功')
             setDialogOpen(false)
@@ -114,7 +144,7 @@ export default function PostAssignment() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>用户ID</TableHead>
-                                    <TableHead>用户名</TableHead>
+                                    <TableHead>用户账号</TableHead>
                                     <TableHead>真实姓名</TableHead>
                                     <TableHead>部门</TableHead>
                                     <TableHead>岗位</TableHead>
@@ -157,6 +187,9 @@ export default function PostAssignment() {
                 <DialogContent className="max-w-md">
                     <DialogHeader>
                         <DialogTitle>分配岗位</DialogTitle>
+                        <DialogDescription>
+                            请选择用户所属部门与岗位，保存后立即生效。
+                        </DialogDescription>
                     </DialogHeader>
                     <div className="py-4 space-y-4">
                         <div>
@@ -180,6 +213,24 @@ export default function PostAssignment() {
                                     {posts.map((post) => (
                                         <SelectItem key={post.postId} value={String(post.postId)}>
                                             {post.postName}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>选择部门</Label>
+                            <Select
+                                value={selectedDeptId ? String(selectedDeptId) : ''}
+                                onValueChange={(value) => setSelectedDeptId(Number(value))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="请选择部门" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {depts.map((dept) => (
+                                        <SelectItem key={dept.deptId} value={String(dept.deptId)}>
+                                            {dept.deptName}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>

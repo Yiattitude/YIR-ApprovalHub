@@ -378,6 +378,13 @@ public class AdminServiceImpl implements IAdminService {
             throw new BusinessException(404, "岗位不存在");
         }
 
+        if (dto.getDeptId() != null) {
+            Dept dept = deptMapper.selectById(dto.getDeptId());
+            if (dept == null) {
+                throw new BusinessException(404, "部门不存在");
+            }
+            user.setDeptId(dto.getDeptId());
+        }
         user.setPostId(dto.getPostId());
         userMapper.updateById(user);
     }
