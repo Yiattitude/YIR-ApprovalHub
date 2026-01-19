@@ -19,7 +19,16 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { FileViewer } from '@/components/ui/FileViewer'
 
 // 这个界面是干什么的？ 显示用户自己的申请列表，并允许用户筛选和撤回申请
 
@@ -41,6 +50,9 @@ export default function MyApplications() {
     const navigate = useNavigate()
     const [applications, setApplications] = useState<Application[]>([])
     const [loading, setLoading] = useState(false)
+    const [detailLoading, setDetailLoading] = useState(false)
+    const [selectedApp, setSelectedApp] = useState<Application | null>(null)
+    const [applicationDetail, setApplicationDetail] = useState<any>(null)
     const [filter, setFilter] = useState({ appType: '', status: '' })
 
     const allowedStatuses = [0, 1, 2]
@@ -78,6 +90,20 @@ export default function MyApplications() {
             alert(error?.message || '撤回失败')
         }
     }
+
+    const fetchApplicationDetail = async (appId: number) => {
+        setDetailLoading(true)
+        try {
+            const res = await applicationApi.getDetail(appId)
+            setApplicationDetail(res)
+        } catch (error) {
+            console.error(error)
+        } finally {
+            setDetailLoading(false)
+        }
+    }
+
+    const renderDateTime = (value?: string) => (value ? new Date(value).toLocaleString('zh-CN') : '-')
 
     return (
         <div className="space-y-6">
@@ -158,7 +184,16 @@ export default function MyApplications() {
                                             {new Date(app.submitTime).toLocaleString('zh-CN')}
                                         </TableCell>
                                         <TableCell className="space-x-2">
-                                            <Button variant="link" size="sm">查看</Button>
+                                            <Button 
+                                                variant="link" 
+                                                size="sm"
+                                                onClick={() => {
+                                                    setSelectedApp(app);
+                                                    fetchApplicationDetail(app.appId);
+                                                }}
+                                            >
+                                                查看
+                                            </Button>
                                             {app.status === 1 && (
                                                 <Button
                                                     variant="link"
@@ -177,6 +212,184 @@ export default function MyApplications() {
                     )}
                 </CardContent>
             </Card>
+
+            {/* 申请详情对话框 */}
+            <Dialog open={!!selectedApp} onOpenChange={(open) => !open && setSelectedApp(null)}>
+                <DialogContent className="max-w-3xl">
+                    <DialogHeader>
+                        <DialogTitle>申请详情：{selectedApp?.title}</DialogTitle>
+                        <DialogDescription>
+                            查看完整的申请和审批信息
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {detailLoading ? (
+                        <div className="text-center py-8">加载详情中...</div>
+                    ) : applicationDetail ? (
+                        <div className="space-y-6">
+                            {/* 申请基本信息 */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-lg">申请信息</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-sm text-gray-500">申请单号</p>
+                                            <p className="font-medium">{applicationDetail.application.appNo}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500">申请类型</p>
+                                            <p className="font-medium">{typeMap[applicationDetail.application.appType]}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500">状态</p>
+                                            <Badge variant={statusMap[applicationDetail.application.status]?.variant}>
+                                                {statusMap[applicationDetail.application.status]?.text}
+                                            </Badge>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500">当前节点</p>
+                                            <p className="font-medium">{applicationDetail.application.currentNode || '-'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500">提交时间</p>
+                                            <p className="font-medium">{renderDateTime(applicationDetail.application.submitTime)}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500">完成时间</p>
+                                            <p className="font-medium">{renderDateTime(applicationDetail.application.finishTime)}</p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* 申请详细信息 */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-lg">申请内容</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    {applicationDetail.application.appType === 'leave' ? (
+                                        /* 请假申请详情 */
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <p className="text-sm text-gray-500">请假类型</p>
+                                                <p className="font-medium">
+                                                    {applicationDetail.detail.leaveType === 1 ? '事假' : 
+                                                     applicationDetail.detail.leaveType === 2 ? '病假' : 
+                                                     applicationDetail.detail.leaveType === 3 ? '年假' : '调休'}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">请假天数</p>
+                                                <p className="font-medium">{applicationDetail.detail.days} 天</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">开始时间</p>
+                                                <p className="font-medium">{renderDateTime(applicationDetail.detail.startTime)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">结束时间</p>
+                                                <p className="font-medium">{renderDateTime(applicationDetail.detail.endTime)}</p>
+                                            </div>
+                                            <div className="col-span-2">
+                                                <p className="text-sm text-gray-500">请假事由</p>
+                                                <p className="font-medium whitespace-pre-wrap">{applicationDetail.detail.reason}</p>
+                                            </div>
+                                            {applicationDetail.detail.attachment && (
+                                                <div className="col-span-2 space-y-2">
+                                                    <p className="text-sm text-gray-500">附件</p>
+                                                    <FileViewer
+                                                        fileName={applicationDetail.detail.attachment}
+                                                        fileContent={applicationDetail.detail.attachment.startsWith('data:') ? applicationDetail.detail.attachment : undefined}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : applicationDetail.application.appType === 'reimburse' ? (
+                                        /* 报销申请详情 */
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <p className="text-sm text-gray-500">报销类别</p>
+                                                <p className="font-medium">
+                                                    {applicationDetail.detail.expenseType === 1 ? '差旅交通费' : 
+                                                     applicationDetail.detail.expenseType === 2 ? '业务招待费' : 
+                                                     applicationDetail.detail.expenseType === 3 ? '日常办公费' : 
+                                                     applicationDetail.detail.expenseType === 4 ? '培训教育费' : 
+                                                     applicationDetail.detail.expenseType === 5 ? '服务采购费' : '其他'}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">报销金额</p>
+                                                <p className="font-medium">¥ {applicationDetail.detail.amount.toFixed(2)}</p>
+                                            </div>
+                                            <div className="col-span-2">
+                                                <p className="text-sm text-gray-500">费用发生日期</p>
+                                                <p className="font-medium">{new Date(applicationDetail.detail.occurDate).toLocaleDateString('zh-CN')}</p>
+                                            </div>
+                                            <div className="col-span-2">
+                                                <p className="text-sm text-gray-500">费用说明</p>
+                                                <p className="font-medium whitespace-pre-wrap">{applicationDetail.detail.reason}</p>
+                                            </div>
+                                            <div className="col-span-2 space-y-2">
+                                                <p className="text-sm text-gray-500">发票附件</p>
+                                                <FileViewer
+                                                    fileName={applicationDetail.detail.invoiceAttachment}
+                                                    fileContent={applicationDetail.detail.invoiceAttachment.startsWith('data:') ? applicationDetail.detail.invoiceAttachment : undefined}
+                                                />
+                                            </div>
+                                        </div>
+                                    ) : null}
+                                </CardContent>
+                            </Card>
+
+                            {/* 审批历史 */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-lg">审批历史</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    {applicationDetail.history && applicationDetail.history.length > 0 ? (
+                                        <div className="space-y-4">
+                                            {applicationDetail.history.map((item: any, index: number) => (
+                                                <div key={item.historyId || index} className="relative pl-8 pb-4 border-l-2 border-gray-200">
+                                                    <div className="absolute left-[-9px] top-0 w-4 h-4 bg-gray-800 rounded-full"></div>
+                                                    <div className="space-y-1">
+                                                        <div className="flex justify-between items-center">
+                                                            <p className="font-medium">{item.approverName || '系统'}</p>
+                                                            <p className="text-sm text-gray-500">{renderDateTime(item.approveTime || item.createTime)}</p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="text-sm">
+                                                                {item.action === 1 ? '同意' : item.action === 2 ? '拒绝' : '处理中'}
+                                                            </p>
+                                                            <p className="text-sm text-gray-500">{item.nodeName}</p>
+                                                        </div>
+                                                        {item.comment && (
+                                                            <div className="mt-2 bg-gray-50 p-3 rounded">
+                                                                <p className="text-sm">{item.comment}</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-gray-500">暂无审批历史</p>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
+                    ) : (
+                        <div className="text-center py-8 text-gray-500">无法加载申请详情</div>
+                    )}
+
+                    <DialogFooter>
+                        <Button onClick={() => setSelectedApp(null)}>关闭</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
