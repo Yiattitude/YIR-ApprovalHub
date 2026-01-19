@@ -37,8 +37,8 @@ public class TaskServiceImpl implements ITaskService {
         Page<Task> page = new Page<>(pageNum, pageSize);
 
         LambdaQueryWrapper<Task> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Task::getAssigneeId, userId)
-                .eq(Task::getStatus, 0) // 待处理
+        // 所有待处理的任务都可以被审批员看到
+        wrapper.eq(Task::getStatus, 0) // 待处理
                 .orderByDesc(Task::getCreateTime);
 
         Page<Task> taskPage = taskMapper.selectPage(page, wrapper);
@@ -77,10 +77,8 @@ public class TaskServiceImpl implements ITaskService {
             throw new BusinessException(404, "任务不存在");
         }
 
-        // 2. 验证权限
-        if (!task.getAssigneeId().equals(userId)) {
-            throw new BusinessException(403, "无权处理此任务");
-        }
+        // 2. 验证权限 - 所有审批员都可以处理任何待办任务
+        // 移除了基于assigneeId的权限验证
 
         if (task.getStatus() == 1) {
             throw new BusinessException("任务已处理，请勿重复操作");

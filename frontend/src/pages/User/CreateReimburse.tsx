@@ -13,6 +13,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { FileUpload } from '@/components/ui/FileUpload'
 
 export default function CreateReimburse() {
     const navigate = useNavigate()
@@ -120,12 +121,15 @@ export default function CreateReimburse() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label>发票附件链接 *</Label>
-                            <Input
-                                type="url"
+                            <FileUpload
+                                id="invoice-attachment"
+                                label="发票附件 *"
+                                acceptedTypes=".pdf, .doc, .docx, .xls, .xlsx"
+                                maxSize={10}
                                 value={form.invoiceAttachment}
-                                onChange={(e) => setForm({ ...form, invoiceAttachment: e.target.value })}
-                                placeholder="请输入发票附件链接"
+                                onChange={(value) => setForm({ ...form, invoiceAttachment: value })}
+                                required={true}
+                                useBase64={true}
                             />
                         </div>
 

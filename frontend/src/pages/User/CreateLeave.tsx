@@ -20,6 +20,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card'
+import { FileUpload } from '@/components/ui/FileUpload'
 
 export default function CreateLeave() {
     const navigate = useNavigate()
@@ -139,6 +140,19 @@ export default function CreateLeave() {
                                 onChange={(e) => setForm({ ...form, reason: e.target.value })}
                                 placeholder="请详细说明请假原因"
                                 rows={4}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <FileUpload
+                                id="leave-attachment"
+                                label="附件"
+                                acceptedTypes=".pdf, .doc, .docx"
+                                maxSize={5}
+                                value={form.attachment}
+                                onChange={(value) => setForm({ ...form, attachment: value })}
+                                required={false}
+                                useBase64={true}
                             />
                         </div>
 
