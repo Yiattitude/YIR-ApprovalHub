@@ -37,8 +37,9 @@ export default function Login() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-            <Card className="w-full max-w-md shadow-lg">
+            <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+                {/* 登录卡片 */}
+            <Card className="w-full max-w-md shadow-lg bg-white/30 backdrop-blur-md border border-white/20">
                 <CardHeader className="space-y-1 text-center">
                     <CardTitle className="text-2xl font-bold">YIR-审批系统</CardTitle>
                     <CardDescription>请输入您的账号密码登录</CardDescription>
@@ -46,39 +47,42 @@ export default function Login() {
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="username">用户名</Label>
+                            <Label htmlFor="username" className="text-white">用户名</Label>
                             <Input
                                 id="username"
                                 type="text"
                                 value={form.username}
                                 onChange={(e) => setForm({ ...form, username: e.target.value })}
                                 placeholder="请输入用户名"
+                                className="bg-white/40 backdrop-blur-sm border-white/30 text-white placeholder-white/70"
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="password">密码</Label>
+                            <Label htmlFor="password" className="text-white">密码</Label>
                             <Input
                                 id="password"
                                 type="password"
                                 value={form.password}
                                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                                 placeholder="请输入密码"
+                                className="bg-white/40 backdrop-blur-sm border-white/30 text-white placeholder-white/70"
                             />
                         </div>
 
-                        <Button type="submit" className="w-full" disabled={loading}>
+                        <Button type="submit" className="w-full bg-white/80 hover:bg-white text-gray-900" disabled={loading}>
                             {loading ? '登录中...' : '登录'}
                         </Button>
                     </form>
                 </CardContent>
                 <CardFooter className="flex flex-col gap-4 text-center">
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-white">
                         还没有账号？
                         <Link to="/register" className="text-primary hover:underline ml-1">
                             立即注册
                         </Link>
                     </div>
+
                     <div className="flex flex-col gap-2 text-xs text-muted-foreground border-t pt-4 w-full">
                         {[
                             { label: '管理账号', account: 'admin / 123456', icon: '👩‍💼' },
@@ -94,6 +98,7 @@ export default function Login() {
                                 <span className="text-muted-foreground flex-1 text-left">{item.account}</span>
                             </span>
                         ))}
+
                     </div>
                 </CardFooter>
             </Card>

@@ -18,6 +18,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function App() {
     return (
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            {/* 全局樱花Canvas */}
+            <canvas id="sakura" className="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none"></canvas>
             <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
