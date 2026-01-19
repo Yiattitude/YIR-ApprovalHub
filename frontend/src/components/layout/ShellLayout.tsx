@@ -46,7 +46,7 @@ export function ShellLayout({
                             <img className="h-12 w-12 rounded-full object-cover" src={logoImage} alt="Approval Hub Logo" />
                             <div>
                                 <p className="text-sm uppercase tracking-[0.2em] text-white/60">Approval Hub</p>
-                                <p className="text-lg font-semibold">审批系统</p>
+                                <p className="text-lg font-semibold">YIR-审批系统</p>
                             </div>
                         </div>
                         <nav className="mt-10 space-y-1">

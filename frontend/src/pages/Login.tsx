@@ -40,7 +40,7 @@ export default function Login() {
         <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
             <Card className="w-full max-w-md shadow-lg">
                 <CardHeader className="space-y-1 text-center">
-                    <CardTitle className="text-2xl font-bold">审批系统</CardTitle>
+                    <CardTitle className="text-2xl font-bold">YIR-审批系统</CardTitle>
                     <CardDescription>请输入您的账号密码登录</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -79,10 +79,21 @@ export default function Login() {
                             立即注册
                         </Link>
                     </div>
-                    <div className="flex flex-col gap-1 text-xs text-muted-foreground border-t pt-4 w-full">
-                        <span>管理账号：admin / 123456</span>
-                        <span>审批账号：zyb / 123456</span>
-                        <span>员工账号：wangyi / 123456</span>
+                    <div className="flex flex-col gap-2 text-xs text-muted-foreground border-t pt-4 w-full">
+                        {[
+                            { label: '管理账号', account: 'admin / 123456', icon: '👩‍💼' },
+                            { label: '审批账号', account: 'zyb / 123456', icon: '✅' },
+                            { label: '员工账号', account: 'wangyi / 123456', icon: '👤' },
+                        ].map((item) => (
+                            <span
+                                key={item.label}
+                                className="flex items-center gap-3 rounded-full border border-muted-foreground/20 px-4 py-2 text-sm"
+                            >
+                                <span className="text-base w-6 text-center">{item.icon}</span>
+                                <span className="font-medium text-foreground w-20 text-left">{item.label}</span>
+                                <span className="text-muted-foreground flex-1 text-left">{item.account}</span>
+                            </span>
+                        ))}
                     </div>
                 </CardFooter>
             </Card>
