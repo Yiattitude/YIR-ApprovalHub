@@ -85,16 +85,19 @@ export default function ApproverSummary() {
             title: '审批申请数量',
             value: summary?.totalCount,
             description: '累计处理的审批任务',
+            accent: 'from-indigo-500/20 via-indigo-500/10 to-transparent',
         },
         {
             title: '审批通过数',
             value: summary?.approvedCount,
             description: '已同意的审批',
+            accent: 'from-emerald-500/25 via-emerald-500/10 to-transparent',
         },
         {
             title: '审批拒绝数',
             value: summary?.rejectedCount,
             description: '已拒绝的审批',
+            accent: 'from-rose-500/25 via-rose-500/10 to-transparent',
         },
     ]
 
@@ -117,50 +120,44 @@ export default function ApproverSummary() {
 
     const showSkeleton = loading && !summary && !error
 
-    if (showSkeleton) {
-        return (
-            <div className="space-y-6">
-                {[0, 1].map((key) => (
-                    <div key={key} className="h-40 rounded-2xl border bg-white shadow-sm animate-pulse" />
-                ))}
-            </div>
-        )
-    }
-
     return (
-        <div className="space-y-6">
-            <Card className="shadow-sm">
-                <CardHeader>
-                    <CardTitle>审批人信息</CardTitle>
-                    <CardDescription>了解当前审批人的基础信息与权限</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid gap-6 md:grid-cols-4">
-                        <div>
-                            <p className="text-sm text-muted-foreground">姓名</p>
-                            <p className="text-2xl font-semibold text-foreground mt-1">
-                                {summary?.realName || user?.realName || '--'}
-                            </p>
+        <div className="space-y-8">
+            {showSkeleton ? (
+                <div className="space-y-4">
+                    {[0, 1].map((key) => (
+                        <div key={key} className="h-40 rounded-[28px] border border-white/70 bg-white/70 shadow-[0_25px_45px_rgba(15,23,42,0.06)] animate-pulse" />
+                    ))}
+                </div>
+            ) : (
+                <Card className="border-none bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-400 text-white">
+                    <CardHeader className="pb-0">
+                        <CardTitle className="text-white">审批人信息</CardTitle>
+                        <CardDescription className="text-white/70">
+                            了解当前审批人的基础信息与权限
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                        <div className="grid gap-6 md:grid-cols-4">
+                            <div>
+                                <p className="text-sm text-white/70">姓名</p>
+                                <p className="mt-1 text-2xl font-semibold">{summary?.realName || user?.realName || '--'}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-white/70">部门</p>
+                                <p className="mt-1 text-2xl font-semibold">{summary?.deptName || '未分配'}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-white/70">岗位</p>
+                                <p className="mt-1 text-2xl font-semibold">{summary?.postName || '未分配'}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-white/70">权限</p>
+                                <div className="mt-2 flex flex-wrap gap-2">{permissionBadges}</div>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">部门</p>
-                            <p className="text-2xl font-semibold text-foreground mt-1">
-                                {summary?.deptName || '未分配'}
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">岗位</p>
-                            <p className="text-2xl font-semibold text-foreground mt-1">
-                                {summary?.postName || '未分配'}
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">权限</p>
-                            <div className="mt-2 flex flex-wrap gap-2">{permissionBadges}</div>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            )}
 
             {error ? (
                 <Card className="border-destructive/40 shadow-sm">
@@ -181,53 +178,57 @@ export default function ApproverSummary() {
                 <>
                     <div className="grid gap-4 md:grid-cols-3">
                         {metricCards.map((card) => (
-                            <Card key={card.title} className="border-muted bg-white shadow-sm">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-base font-medium text-muted-foreground">
-                                        {card.title}
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-3xl font-bold tracking-tight">
-                                        {formatInt(card.value)}
+                            <Card key={card.title} className="border-none bg-white/90">
+                                <CardContent className="space-y-4 pt-6">
+                                    <div className="space-y-1">
+                                        <p className="text-sm text-muted-foreground">{card.title}</p>
+                                        <p className="text-4xl font-semibold tracking-tight">{formatInt(card.value)}</p>
+                                        <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">{card.description}</p>
                                     </div>
-                                    {card.description && (
-                                        <p className="text-sm text-muted-foreground mt-2">{card.description}</p>
-                                    )}
+                                    <div className={`rounded-2xl bg-gradient-to-b ${card.accent} p-2`}> 
+                                        <div className="h-[48px]">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <LineChart data={chartData.slice(-10)}>
+                                                    <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                                                </LineChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
                                 </CardContent>
                             </Card>
                         ))}
                     </div>
 
                     <Card className="shadow-sm">
-                        <CardHeader>
+                        <CardHeader className="pb-2">
                             <CardTitle>按申请类型统计</CardTitle>
                             <CardDescription>不同申请类型的审批占比</CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="space-y-4">
                             {summary?.typeStats?.length ? (
-                                <div className="grid gap-4 md:grid-cols-3">
-                                    {summary.typeStats.map((item) => {
-                                        const formatted = formatInt(item.count)
-                                        return (
-                                            <Card key={item.appType} className="border-muted bg-muted/10">
-                                                <CardHeader className="pb-2">
-                                                    <CardTitle className="text-base font-medium text-muted-foreground">
-                                                        {item.typeLabel}
-                                                    </CardTitle>
-                                                </CardHeader>
-                                                <CardContent>
-                                                    <div className="text-3xl font-bold tracking-tight">
+                                summary.typeStats.map((item) => {
+                                    const formatted = formatInt(item.count)
+                                    const percent = summary?.totalCount ? Math.round(((item.count || 0) / (summary.totalCount || 1)) * 100) : 0
+                                    return (
+                                        <div key={item.appType} className="rounded-2xl border border-muted/60 p-4">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-sm font-medium text-muted-foreground">{item.typeLabel}</p>
+                                                    <p className="text-2xl font-semibold text-foreground mt-1">
                                                         {formatted}
                                                         {formatted !== '--' && (
                                                             <span className="ml-1 text-sm text-muted-foreground">件</span>
                                                         )}
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        )
-                                    })}
-                                </div>
+                                                    </p>
+                                                </div>
+                                                <span className="text-sm font-semibold text-primary">{percent}%</span>
+                                            </div>
+                                            <div className="mt-3 h-2 rounded-full bg-muted">
+                                                <div className="h-full rounded-full bg-gradient-to-r from-primary to-indigo-400" style={{ width: `${Math.min(100, percent)}%` }} />
+                                            </div>
+                                        </div>
+                                    )
+                                })
                             ) : (
                                 <p className="text-sm text-muted-foreground">暂无审批类型统计数据</p>
                             )}
@@ -235,34 +236,48 @@ export default function ApproverSummary() {
                     </Card>
 
                     <Card className="shadow-sm">
-                        <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                            <div>
+                        <CardHeader className="gap-6">
+                            <div className="flex flex-col gap-2">
                                 <CardTitle>按日审批趋势</CardTitle>
                                 <CardDescription>选择年月查看每日审批任务的波动情况</CardDescription>
                             </div>
-                            <div className="flex flex-wrap items-center gap-2">
-                                <select
-                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
-                                    value={selectedYear}
-                                    onChange={(event) => setSelectedYear(Number(event.target.value))}
-                                >
-                                    {yearOptions.map((year) => (
-                                        <option key={year} value={year}>
-                                            {year}年
-                                        </option>
-                                    ))}
-                                </select>
-                                <select
-                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
-                                    value={selectedMonth}
-                                    onChange={(event) => setSelectedMonth(Number(event.target.value))}
-                                >
-                                    {monthOptions.map((month) => (
-                                        <option key={month} value={month}>
-                                            {month}月
-                                        </option>
-                                    ))}
-                                </select>
+                            <div className="flex flex-wrap gap-4">
+                                <div className="space-y-1">
+                                    <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">年度</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {yearOptions.map((year) => (
+                                            <button
+                                                key={year}
+                                                className={`rounded-full border px-4 py-1.5 text-sm transition ${
+                                                    selectedYear === year
+                                                        ? 'border-primary bg-primary/10 text-primary'
+                                                        : 'border-muted-foreground/10 text-muted-foreground hover:border-primary/30'
+                                                }`}
+                                                onClick={() => setSelectedYear(year)}
+                                            >
+                                                {year}年
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">月份</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {monthOptions.map((month) => (
+                                            <button
+                                                key={month}
+                                                className={`rounded-full border px-3 py-1 text-sm transition ${
+                                                    selectedMonth === month
+                                                        ? 'border-primary bg-primary/10 text-primary'
+                                                        : 'border-muted-foreground/10 text-muted-foreground hover:border-primary/30'
+                                                }`}
+                                                onClick={() => setSelectedMonth(month)}
+                                            >
+                                                {month}月
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
                                 <Button
                                     variant="outline"
                                     size="sm"
@@ -273,9 +288,9 @@ export default function ApproverSummary() {
                                 </Button>
                             </div>
                         </CardHeader>
-                        <CardContent className="h-[320px]">
+                        <CardContent className="h-[360px]">
                             {chartData.length === 0 ? (
-                                <div className="h-full flex items-center justify-center text-muted-foreground">
+                                <div className="flex h-full items-center justify-center text-muted-foreground">
                                     所选月份暂无审批趋势数据
                                 </div>
                             ) : (

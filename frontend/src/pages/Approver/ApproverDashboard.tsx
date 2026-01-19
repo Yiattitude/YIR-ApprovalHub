@@ -1,12 +1,12 @@
-import { Routes, Route, Link, useNavigate, useLocation, Navigate } from 'react-router-dom'
+import { Routes, Route, useNavigate, useLocation, type NavigateFunction } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import MyApplications from '../MyApplications'
 import TodoTasks from './TodoTasks'
 import DoneTasks from './DoneTasks'
 import ApproverSummary from './ApproverSummary'
 import { Button } from '@/components/ui/button'
-import { LogOut, FileText, CheckSquare, ClipboardList, Gauge } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { FileText, CheckSquare, ClipboardList, Gauge, Sparkles } from 'lucide-react'
+import { ShellLayout, type ShellNavItem } from '@/components/layout/ShellLayout'
 
 /**
  * 审批人Dashboard
@@ -22,70 +22,101 @@ export default function ApproverDashboard() {
         navigate('/login')
     }
 
-    const navItems = [
-        { href: '/dashboard/summary', label: '审批仪表盘', icon: Gauge },
-        { href: '/dashboard/applications', label: '我的申请', icon: FileText },
-        { href: '/dashboard/todo', label: '待审批任务', icon: CheckSquare },
-        { href: '/dashboard/done', label: '已审批任务', icon: ClipboardList },
+    const navItems: ShellNavItem[] = [
+        { to: '/dashboard/summary', label: '审批仪表盘', icon: Gauge, description: '整体趋势' },
+        { to: '/dashboard/applications', label: '我的申请', icon: FileText, description: '自提事项' },
+        { to: '/dashboard/todo', label: '待审批任务', icon: CheckSquare, description: '当前待办' },
+        { to: '/dashboard/done', label: '已审批任务', icon: ClipboardList, description: '历史记录' },
     ]
 
-    return (
-        <div className="min-h-screen bg-gray-100 flex flex-col">
-            {/* 顶部导航栏 */}
-            <header className="bg-white border-b h-16 flex items-center px-8 justify-between sticky top-0 z-50">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center text-primary-foreground font-bold">
-                        Y
-                    </div>
-                    <span className="font-bold text-xl">审批系统</span>
-                </div>
+    const pageMeta = resolvePageMeta(location.pathname)
 
-                <div className="flex items-center gap-4">
-                    <span className="text-sm text-muted-foreground">欢迎，{user?.realName}</span>
-                    <Button variant="ghost" size="sm" onClick={handleLogout}>
-                        <LogOut className="w-4 h-4 mr-2" />
-                        退出
+    return (
+        <ShellLayout
+            userName={user?.realName}
+            userPosition={user?.postName || '审批人'}
+            avatarFallback={user?.realName?.slice(0, 1) || 'A'}
+            pageTitle={pageMeta.title}
+            pageDescription={pageMeta.description}
+            navItems={navItems}
+            onLogout={handleLogout}
+            headerSlot={
+                <div className="flex flex-wrap gap-3">
+                    <Button variant="soft" size="sm" onClick={() => navigate('/dashboard/todo')}>
+                        <CheckSquare className="mr-2 h-4 w-4" /> 立即审批
+                    </Button>
+                    <Button variant="tonal" size="sm" onClick={() => navigate('/dashboard/done')}>
+                        <ClipboardList className="mr-2 h-4 w-4" /> 查看历史
                     </Button>
                 </div>
-            </header>
+            }
+        >
+            <div className="mx-auto max-w-6xl space-y-10">
+                <Routes>
+                    <Route path="summary" element={<ApproverSummary />} />
+                    <Route path="applications" element={<MyApplications />} />
+                    <Route path="todo" element={<TodoTasks />} />
+                    <Route path="done" element={<DoneTasks />} />
+                    <Route index element={<ApproverWelcome navigate={navigate} />} />
+                </Routes>
+            </div>
+        </ShellLayout>
+    )
+}
 
-            <div className="flex flex-1">
-                {/* 侧边栏 */}
-                <aside className="w-64 bg-white border-r min-h-[calc(100vh-4rem)] p-4 space-y-2">
-                    {navItems.map((item) => {
-                        const Icon = item.icon
-                        const isActive = location.pathname.startsWith(item.href)
+function resolvePageMeta(pathname: string) {
+    const metaMap: Record<string, { title: string; description: string }> = {
+        '/dashboard/summary': {
+            title: '审批仪表盘',
+            description: '掌握你本月的审批数量、通过率与类型构成。',
+        },
+        '/dashboard/applications': {
+            title: '我的申请',
+            description: '查看自己提交的请假/报销，掌握审批进度。',
+        },
+        '/dashboard/todo': {
+            title: '待审批任务',
+            description: '按优先级列出所有待处理的审批，快速批量处理。',
+        },
+        '/dashboard/done': {
+            title: '已审批任务',
+            description: '回溯你的审批动作与意见，支持抽查与复核。',
+        },
+    }
 
-                        return (
-                            <Link
-                                key={item.href}
-                                to={item.href}
-                                className={cn(
-                                    "flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium transition-colors",
-                                    isActive
-                                        ? "bg-primary text-primary-foreground"
-                                        : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                                )}
-                            >
-                                <Icon className="w-4 h-4" />
-                                {item.label}
-                            </Link>
-                        )
-                    })}
-                </aside>
+    const matched = Object.entries(metaMap).find(([key]) => pathname.startsWith(key))?.[1]
+    return matched ?? {
+        title: '审批中心',
+        description: '使用左侧功能切换不同审批视角，确保流转顺畅。',
+    }
+}
 
-                {/* 主内容区 */}
-                <main className="flex-1 p-8 overflow-auto">
-                    <div className="max-w-5xl mx-auto">
-                        <Routes>
-                            <Route path="summary" element={<ApproverSummary />} />
-                            <Route path="applications" element={<MyApplications />} />
-                            <Route path="todo" element={<TodoTasks />} />
-                            <Route path="done" element={<DoneTasks />} />
-                            <Route index element={<Navigate to="/dashboard/summary" replace />} />
-                        </Routes>
+function ApproverWelcome({ navigate }: { navigate: NavigateFunction }) {
+    return (
+        <div className="rounded-[32px] border border-white/60 bg-gradient-to-r from-emerald-500/15 via-white to-indigo-500/10 p-10">
+            <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                    <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1 text-sm font-medium text-primary">
+                        <Sparkles className="h-4 w-4" /> 审批效率助手
+                    </span>
+                    <h2 className="mt-4 text-4xl font-semibold tracking-tight text-[#0F172A]">待办提醒已就绪</h2>
+                    <p className="mt-3 max-w-2xl text-base text-muted-foreground">
+                        进入待办任务即可查看优先级和附件预览，也可以先浏览仪表盘了解整体趋势。
+                    </p>
+                </div>
+                <div className="flex flex-col gap-3">
+                    <Button size="lg" onClick={() => navigate('/dashboard/todo')}>
+                        <CheckSquare className="mr-2 h-5 w-5" /> 前往待办
+                    </Button>
+                    <div className="flex flex-wrap gap-3">
+                        <Button variant="outline" onClick={() => navigate('/dashboard/done')}>
+                            <ClipboardList className="mr-2 h-4 w-4" /> 查看已办
+                        </Button>
+                        <Button variant="outline" onClick={() => navigate('/dashboard/summary')}>
+                            <Gauge className="mr-2 h-4 w-4" /> 仪表盘
+                        </Button>
                     </div>
-                </main>
+                </div>
             </div>
         </div>
     )

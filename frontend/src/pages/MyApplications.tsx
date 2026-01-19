@@ -176,9 +176,9 @@ export default function MyApplications() {
                                         </TableCell>
                                         <TableCell className="space-x-2">
                                             <Button
-                                                variant="link"
+                                                variant="outline"
                                                 size="sm"
-                                                className="inline-flex items-center gap-1"
+                                                className="inline-flex items-center gap-1 rounded-full border-primary/30 px-4 py-1 text-primary hover:border-primary/60 hover:bg-primary/5"
                                                 onClick={() => handleViewDetail(app.appId)}
                                             >
                                                 <Eye className="h-4 w-4" />
@@ -186,9 +186,9 @@ export default function MyApplications() {
                                             </Button>
                                             {app.status === 1 && (
                                                 <Button
-                                                    variant="link"
+                                                    variant="outline"
                                                     size="sm"
-                                                    className="inline-flex items-center gap-1 text-destructive"
+                                                    className="inline-flex items-center gap-1 rounded-full border-destructive/30 px-4 py-1 text-destructive hover:border-destructive/60 hover:bg-destructive/5"
                                                     onClick={() => handleWithdraw(app.appId)}
                                                 >
                                                     <Undo2 className="h-4 w-4" />

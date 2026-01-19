@@ -255,9 +255,9 @@ export default function ApprovalHistory() {
                                         <TableCell>{renderDateTime(app.submitTime)}</TableCell>
                                         <TableCell className="space-x-2">
                                             <Button
-                                                variant="link"
+                                                variant="outline"
                                                 size="sm"
-                                                className="inline-flex items-center gap-1"
+                                                className="inline-flex items-center gap-1 rounded-full border-primary/30 px-4 py-1 text-primary hover:border-primary/60 hover:bg-primary/5"
                                                 onClick={() => handleViewDetail(app.appId)}
                                             >
                                                 <Eye className="h-4 w-4" />

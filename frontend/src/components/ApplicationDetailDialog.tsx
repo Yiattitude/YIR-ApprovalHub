@@ -309,7 +309,7 @@ function AttachmentActions({ url, onPreview }: { url: string; onPreview?: () => 
         <div className="flex flex-wrap items-center gap-3">
             <Button variant="outline" size="sm" asChild>
                 <a href={resolvedUrl} target="_blank" rel="noreferrer">
-                    新标签打开
+                    链接打开
                 </a>
             </Button>
             {previewable && onPreview && (
